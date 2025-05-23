@@ -1,4 +1,5 @@
 
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { User, School, Calendar, Trophy, Clock } from 'lucide-react';
 import { useProfile } from '@/hooks/useProfile';
 import { useFocusLeaderboard } from '@/hooks/useFocusLeaderboard';
-import { useState } from 'react';
 import { toast } from 'sonner';
 
 const Profile = () => {
