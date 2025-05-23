@@ -6,19 +6,42 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Upload, HelpCircle, Lightbulb, BookOpen } from 'lucide-react';
+import { useAI } from '@/hooks/useAI';
+import { toast } from 'sonner';
 
 const DoubtSolver = () => {
   const [inputType, setInputType] = useState<'text' | 'upload'>('text');
-  const [isSolving, setIsSolving] = useState(false);
+  const { callAI, loading: isSolving } = useAI();
+  const [question, setQuestion] = useState('');
+  const [grade, setGrade] = useState('');
+  const [subject, setSubject] = useState('');
+  const [board, setBoard] = useState('');
+  const [solution, setSolution] = useState<string | null>(null);
 
   const solveDoubt = async () => {
-    setIsSolving(true);
-    // Here you would integrate with DeepSeek AI API
-    setTimeout(() => {
-      setIsSolving(false);
-      // Mock success
-      alert('Doubt solved successfully! (Mock implementation)');
-    }, 3000);
+    if (!question.trim()) {
+      toast.error('Please enter your question');
+      return;
+    }
+
+    const prompt = `
+      I need help solving the following problem:
+      
+      ${question}
+      
+      ${grade ? `Grade level: ${grade}` : ''}
+      ${subject ? `Subject: ${subject}` : ''}
+      ${board ? `Board of Education: ${board}` : ''}
+      
+      Please provide a step-by-step solution with clear explanations.
+    `;
+
+    const result = await callAI(prompt, 'doubt-solver');
+    
+    if (result) {
+      setSolution(result.response);
+      toast.success('Solution generated successfully!');
+    }
   };
 
   return (
@@ -49,7 +72,7 @@ const DoubtSolver = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="grade">Grade</Label>
-                <Select>
+                <Select value={grade} onValueChange={setGrade}>
                   <SelectTrigger className="bg-gray-50 dark:bg-gray-700">
                     <SelectValue placeholder="Select Grade" />
                   </SelectTrigger>
@@ -64,7 +87,7 @@ const DoubtSolver = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="subject">Subject</Label>
-                <Select>
+                <Select value={subject} onValueChange={setSubject}>
                   <SelectTrigger className="bg-gray-50 dark:bg-gray-700">
                     <SelectValue placeholder="Select Subject" />
                   </SelectTrigger>
@@ -83,7 +106,7 @@ const DoubtSolver = () => {
 
             <div className="space-y-2">
               <Label htmlFor="board">Board of Education</Label>
-              <Select>
+              <Select value={board} onValueChange={setBoard}>
                 <SelectTrigger className="bg-gray-50 dark:bg-gray-700">
                   <SelectValue placeholder="Select Board" />
                 </SelectTrigger>
@@ -142,6 +165,8 @@ const DoubtSolver = () => {
                   id="question"
                   placeholder="Enter your question or doubt here. Be as specific as possible for better help..."
                   className="min-h-[300px] bg-gray-50 dark:bg-gray-700"
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
                 />
               </div>
             ) : (
@@ -190,55 +215,73 @@ const DoubtSolver = () => {
         </CardContent>
       </Card>
 
-      {/* Sample Solution (Mock) */}
+      {/* Solution */}
       <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-gray-900 dark:text-white">
             <BookOpen className="h-5 w-5" />
-            <span>Solution (Sample)</span>
+            <span>Solution</span>
           </CardTitle>
           <CardDescription className="text-gray-600 dark:text-gray-400">
             Step-by-step solution and approach tutorial
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-              <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
-                Step 1: Understanding the Problem
-              </h4>
-              <p className="text-blue-700 dark:text-blue-300">
-                This section will show the first step of solving your question once you submit it.
-              </p>
+          {solution ? (
+            <div className="prose dark:prose-invert max-w-none">
+              {solution.split('\n').map((paragraph, idx) => {
+                if (paragraph.trim().startsWith('#')) {
+                  // It's a heading
+                  return <h3 key={idx} className="font-semibold text-blue-800 dark:text-blue-200 mb-2">{paragraph.replace(/^#+\s/, '')}</h3>;
+                } else if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('*')) {
+                  // It's a list item
+                  return <li key={idx} className="ml-4">{paragraph.substring(1).trim()}</li>;
+                } else if (paragraph.trim()) {
+                  // Regular paragraph with content
+                  return <p key={idx} className="text-gray-700 dark:text-gray-300">{paragraph}</p>;
+                }
+                return null;
+              })}
             </div>
-            
-            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-              <h4 className="font-semibold text-green-800 dark:text-green-200 mb-2">
-                Step 2: Solution Approach
-              </h4>
-              <p className="text-green-700 dark:text-green-300">
-                The AI will provide a detailed step-by-step solution approach.
-              </p>
+          ) : (
+            <div className="space-y-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                  Step 1: Understanding the Problem
+                </h4>
+                <p className="text-blue-700 dark:text-blue-300">
+                  This section will show the first step of solving your question once you submit it.
+                </p>
+              </div>
+              
+              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                <h4 className="font-semibold text-green-800 dark:text-green-200 mb-2">
+                  Step 2: Solution Approach
+                </h4>
+                <p className="text-green-700 dark:text-green-300">
+                  The AI will provide a detailed step-by-step solution approach.
+                </p>
+              </div>
+              
+              <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                <h4 className="font-semibold text-purple-800 dark:text-purple-200 mb-2">
+                  Step 3: Final Answer
+                </h4>
+                <p className="text-purple-700 dark:text-purple-300">
+                  Complete solution with the final answer and verification.
+                </p>
+              </div>
+              
+              <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
+                <h4 className="font-semibold text-orange-800 dark:text-orange-200 mb-2">
+                  💡 How to Approach Similar Questions
+                </h4>
+                <p className="text-orange-700 dark:text-orange-300">
+                  The AI will provide general tips and strategies for solving similar types of questions.
+                </p>
+              </div>
             </div>
-            
-            <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
-              <h4 className="font-semibold text-purple-800 dark:text-purple-200 mb-2">
-                Step 3: Final Answer
-              </h4>
-              <p className="text-purple-700 dark:text-purple-300">
-                Complete solution with the final answer and verification.
-              </p>
-            </div>
-            
-            <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
-              <h4 className="font-semibold text-orange-800 dark:text-orange-200 mb-2">
-                💡 How to Approach Similar Questions
-              </h4>
-              <p className="text-orange-700 dark:text-orange-300">
-                The AI will provide general tips and strategies for solving similar types of questions.
-              </p>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>
