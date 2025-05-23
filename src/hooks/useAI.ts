@@ -32,6 +32,8 @@ export function useAI() {
     setLoading(true);
     setError(null);
     
+    console.log('Calling AI service:', service, 'with prompt length:', prompt.length);
+    
     try {
       const { data, error: apiError } = await supabase.functions.invoke('deepseek-ai', {
         body: {
@@ -41,12 +43,19 @@ export function useAI() {
         }
       });
       
+      console.log('AI response received:', data ? 'success' : 'no data', apiError ? `error: ${apiError.message}` : 'no error');
+      
       if (apiError) {
         throw new Error(apiError.message || 'Failed to call AI service');
       }
       
+      if (!data) {
+        throw new Error('No response received from AI service');
+      }
+      
       return data as AIResponse;
     } catch (err) {
+      console.error('AI service error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMessage);
       toast.error(`AI Error: ${errorMessage}`);
