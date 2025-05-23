@@ -4,9 +4,65 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, School, Mail, Calendar, Trophy, Clock } from 'lucide-react';
+import { User, School, Calendar, Trophy, Clock } from 'lucide-react';
+import { useProfile } from '@/hooks/useProfile';
+import { useFocusLeaderboard } from '@/hooks/useFocusLeaderboard';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 const Profile = () => {
+  const { profile, loading, updateProfile } = useProfile();
+  const { userRank } = useFocusLeaderboard();
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    full_name: '',
+    school_name: '',
+    gender: ''
+  });
+
+  // Update form data when profile loads
+  React.useEffect(() => {
+    if (profile) {
+      setFormData({
+        full_name: profile.full_name,
+        school_name: profile.school_name,
+        gender: profile.gender
+      });
+    }
+  }, [profile]);
+
+  const handleUpdateProfile = async () => {
+    const { error } = await updateProfile(formData);
+    if (error) {
+      toast.error('Failed to update profile');
+    } else {
+      toast.success('Profile updated successfully');
+      setIsEditing(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-400">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-400">Profile not found</p>
+        </div>
+      </div>
+    );
+  }
+
+  const userInitials = profile.full_name.split(' ').map(name => name[0]).join('').slice(0, 2);
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       {/* Profile Header */}
@@ -14,21 +70,21 @@ const Profile = () => {
         <CardHeader>
           <div className="flex items-center space-x-6">
             <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-2xl font-bold">
-              JD
+              {userInitials}
             </div>
             <div>
-              <CardTitle className="text-2xl">John Doe</CardTitle>
+              <CardTitle className="text-2xl">{profile.full_name}</CardTitle>
               <CardDescription className="text-green-100">
-                Student at Maple High School
+                Student at {profile.school_name}
               </CardDescription>
               <div className="flex items-center space-x-4 mt-2 text-sm text-green-100">
                 <span className="flex items-center space-x-1">
                   <Calendar className="h-4 w-4" />
-                  <span>Joined March 2024</span>
+                  <span>Joined {new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
                 </span>
                 <span className="flex items-center space-x-1">
                   <Trophy className="h-4 w-4" />
-                  <span>Rank #12</span>
+                  <span>Rank #{userRank?.rank || '-'}</span>
                 </span>
               </div>
             </div>
@@ -41,13 +97,24 @@ const Profile = () => {
         <div className="lg:col-span-2 space-y-6">
           <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-gray-900 dark:text-white">
-                <User className="h-5 w-5" />
-                <span>Personal Information</span>
-              </CardTitle>
-              <CardDescription className="text-gray-600 dark:text-gray-400">
-                Update your personal details and preferences
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center space-x-2 text-gray-900 dark:text-white">
+                    <User className="h-5 w-5" />
+                    <span>Personal Information</span>
+                  </CardTitle>
+                  <CardDescription className="text-gray-600 dark:text-gray-400">
+                    Update your personal details and preferences
+                  </CardDescription>
+                </div>
+                <Button
+                  variant={isEditing ? "outline" : "default"}
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="bg-green-500 hover:bg-green-600 text-white"
+                >
+                  {isEditing ? 'Cancel' : 'Edit'}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -55,82 +122,51 @@ const Profile = () => {
                   <Label htmlFor="fullName">Full Name</Label>
                   <Input
                     id="fullName"
-                    defaultValue="John Doe"
+                    value={isEditing ? formData.full_name : profile.full_name}
+                    onChange={(e) => setFormData({...formData, full_name: e.target.value})}
+                    disabled={!isEditing}
                     className="bg-gray-50 dark:bg-gray-700"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    defaultValue="john.doe@example.com"
-                    className="bg-gray-50 dark:bg-gray-700"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="school">School Name</Label>
                   <Input
                     id="school"
-                    defaultValue="Maple High School"
+                    value={isEditing ? formData.school_name : profile.school_name}
+                    onChange={(e) => setFormData({...formData, school_name: e.target.value})}
+                    disabled={!isEditing}
                     className="bg-gray-50 dark:bg-gray-700"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="gender">Gender</Label>
-                  <Select defaultValue="male">
-                    <SelectTrigger className="bg-gray-50 dark:bg-gray-700">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                      <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="grade">Grade</Label>
-                  <Select defaultValue="grade-12">
-                    <SelectTrigger className="bg-gray-50 dark:bg-gray-700">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 12 }, (_, i) => (
-                        <SelectItem key={i} value={`grade-${i + 1}`}>
-                          Grade {i + 1}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="board">Board of Education</Label>
-                  <Select defaultValue="cbse">
-                    <SelectTrigger className="bg-gray-50 dark:bg-gray-700">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cbse">CBSE</SelectItem>
-                      <SelectItem value="icse">ICSE</SelectItem>
-                      <SelectItem value="state">State Board</SelectItem>
-                      <SelectItem value="ib">IB</SelectItem>
-                      <SelectItem value="cambridge">Cambridge</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="gender">Gender</Label>
+                <Select 
+                  value={isEditing ? formData.gender : profile.gender} 
+                  onValueChange={(value) => setFormData({...formData, gender: value})}
+                  disabled={!isEditing}
+                >
+                  <SelectTrigger className="bg-gray-50 dark:bg-gray-700">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <Button className="w-full bg-green-500 hover:bg-green-600 text-white">
-                Update Profile
-              </Button>
+              {isEditing && (
+                <Button 
+                  onClick={handleUpdateProfile}
+                  className="w-full bg-green-500 hover:bg-green-600 text-white"
+                >
+                  Update Profile
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -148,23 +184,17 @@ const Profile = () => {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-400">Total Focus Time</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">87h 22m</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    {userRank?.total_focus_time ? `${Math.floor(userRank.total_focus_time / 60)}h ${userRank.total_focus_time % 60}m` : '0h 0m'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Tasks Completed</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">247</span>
+                  <span className="text-gray-600 dark:text-gray-400">Sessions Completed</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{userRank?.total_sessions || 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Current Streak</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">12 days</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Questions Generated</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">45</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Doubts Solved</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">128</span>
+                  <span className="text-gray-600 dark:text-gray-400">Current Rank</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">#{userRank?.rank || '-'}</span>
                 </div>
               </div>
             </CardContent>
@@ -174,26 +204,22 @@ const Profile = () => {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-gray-900 dark:text-white">
                 <Clock className="h-5 w-5" />
-                <span>Recent Activity</span>
+                <span>Account Info</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3 text-sm">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-gray-600 dark:text-gray-400">Completed 25min focus session</span>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Member since</span>
+                  <span className="text-gray-900 dark:text-white">
+                    {new Date(profile.created_at).toLocaleDateString()}
+                  </span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-gray-600 dark:text-gray-400">Generated Math question paper</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <span className="text-gray-600 dark:text-gray-400">Solved Physics doubt</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                  <span className="text-gray-600 dark:text-gray-400">Completed 3 tasks</span>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Last updated</span>
+                  <span className="text-gray-900 dark:text-white">
+                    {new Date(profile.updated_at).toLocaleDateString()}
+                  </span>
                 </div>
               </div>
             </CardContent>

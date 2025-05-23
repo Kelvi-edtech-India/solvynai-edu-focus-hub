@@ -4,8 +4,13 @@ import { Badge } from '@/components/ui/badge';
 import { Trophy, Clock, Target, TrendingUp } from 'lucide-react';
 import FeatureCard from '@/components/FeatureCard';
 import { FileText, BookOpen, HelpCircle, CheckSquare, Layout, Timer } from 'lucide-react';
+import { useProfile } from '@/hooks/useProfile';
+import { useFocusLeaderboard } from '@/hooks/useFocusLeaderboard';
 
 const Dashboard = () => {
+  const { profile } = useProfile();
+  const { leaderboard, userRank, loading } = useFocusLeaderboard();
+
   const features = [
     {
       icon: FileText,
@@ -51,21 +56,13 @@ const Dashboard = () => {
     }
   ];
 
-  const leaderboardData = [
-    { rank: 1, name: 'Alice Johnson', school: 'Springfield High', duration: '145h 30m' },
-    { rank: 2, name: 'Bob Smith', school: 'Riverside Academy', duration: '132h 15m' },
-    { rank: 3, name: 'Carol Davis', school: 'Oakwood School', duration: '128h 45m' },
-    { rank: 4, name: 'David Wilson', school: 'Pine Valley High', duration: '115h 20m' },
-    { rank: 5, name: 'Emma Brown', school: 'Cedar Grove School', duration: '108h 35m' },
-  ];
-
-  const userRank = { rank: 12, name: 'John Doe', school: 'Maple High School', duration: '87h 22m' };
+  const userName = profile?.full_name || "User";
 
   return (
     <div className="p-6 space-y-6">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-2xl p-8 text-white">
-        <h1 className="text-3xl font-bold mb-2">Welcome back, John! 🎓</h1>
+        <h1 className="text-3xl font-bold mb-2">Welcome back, {userName.split(' ')[0]}! 🎓</h1>
         <p className="text-green-100 text-lg">Ready to enhance your learning journey with AI-powered tools?</p>
       </div>
 
@@ -79,9 +76,11 @@ const Dashboard = () => {
             <Clock className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">87h 22m</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              {userRank?.total_focus_time ? `${Math.floor(userRank.total_focus_time / 60)}h ${userRank.total_focus_time % 60}m` : '0h 0m'}
+            </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              +2h 15m from yesterday
+              Total focus time
             </p>
           </CardContent>
         </Card>
@@ -89,14 +88,16 @@ const Dashboard = () => {
         <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              Tasks Completed
+              Sessions Completed
             </CardTitle>
             <Target className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">24</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              {userRank?.total_sessions || 0}
+            </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              +3 from yesterday
+              Focus sessions
             </p>
           </CardContent>
         </Card>
@@ -109,9 +110,11 @@ const Dashboard = () => {
             <Trophy className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">#12</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              #{userRank?.rank || '-'}
+            </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              +2 positions up
+              In leaderboard
             </p>
           </CardContent>
         </Card>
@@ -119,14 +122,16 @@ const Dashboard = () => {
         <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              Productivity
+              School
             </CardTitle>
             <TrendingUp className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">92%</div>
+            <div className="text-lg font-bold text-gray-900 dark:text-white truncate">
+              {profile?.school_name || 'Not set'}
+            </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              +5% from last week
+              Your institution
             </p>
           </CardContent>
         </Card>
@@ -145,48 +150,58 @@ const Dashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {/* Top 5 */}
-            <div className="space-y-3">
-              {leaderboardData.map((user) => (
-                <div key={user.rank} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                      user.rank === 1 ? 'bg-yellow-100 text-yellow-800' :
-                      user.rank === 2 ? 'bg-gray-100 text-gray-800' :
-                      user.rank === 3 ? 'bg-orange-100 text-orange-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
-                      {user.rank}
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-900 dark:text-white">{user.name}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">{user.school}</div>
-                    </div>
-                  </div>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                    {user.duration}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-
-            {/* User's Rank */}
-            <div className="border-t pt-4 mt-4 border-gray-200 dark:border-gray-600">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-                <div className="flex items-center space-x-4">
-                  <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-bold">
-                    {userRank.rank}
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-900 dark:text-white">{userRank.name} (You)</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">{userRank.school}</div>
-                  </div>
-                </div>
-                <Badge className="bg-green-500 text-white">
-                  {userRank.duration}
-                </Badge>
+            {loading ? (
+              <div className="text-center py-4">
+                <p className="text-gray-500 dark:text-gray-400">Loading leaderboard...</p>
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Top performers */}
+                <div className="space-y-3">
+                  {leaderboard.slice(0, 5).map((user) => (
+                    <div key={user.rank} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
+                      <div className="flex items-center space-x-4">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                          user.rank === 1 ? 'bg-yellow-100 text-yellow-800' :
+                          user.rank === 2 ? 'bg-gray-100 text-gray-800' :
+                          user.rank === 3 ? 'bg-orange-100 text-orange-800' :
+                          'bg-blue-100 text-blue-800'
+                        }`}>
+                          {user.rank}
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-900 dark:text-white">{user.full_name}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{user.school_name}</div>
+                        </div>
+                      </div>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                        {Math.floor(user.total_focus_time / 60)}h {user.total_focus_time % 60}m
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+
+                {/* User's Rank */}
+                {userRank && userRank.rank > 5 && (
+                  <div className="border-t pt-4 mt-4 border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-bold">
+                          {userRank.rank}
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-900 dark:text-white">{userRank.full_name} (You)</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{userRank.school_name}</div>
+                        </div>
+                      </div>
+                      <Badge className="bg-green-500 text-white">
+                        {Math.floor(userRank.total_focus_time / 60)}h {userRank.total_focus_time % 60}m
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </CardContent>
       </Card>

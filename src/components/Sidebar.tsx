@@ -18,11 +18,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
+import { toast } from 'sonner';
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
+  const { signOut } = useAuth();
+  const { profile } = useProfile();
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/' },
@@ -34,8 +39,13 @@ const Sidebar = () => {
     { icon: Timer, label: 'Focus Mode', path: '/focus' },
   ];
 
-  const userName = "John Doe"; // This will come from user context later
+  const userName = profile?.full_name || "User";
   const userInitials = userName.split(' ').map(name => name[0]).join('').slice(0, 2);
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success('Logged out successfully');
+  };
 
   return (
     <div className={`bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'} h-screen flex flex-col`}>
@@ -44,10 +54,33 @@ const Sidebar = () => {
         <div className="flex items-center justify-between">
           {!isCollapsed && (
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">AI</span>
+              <div className="w-8 h-8 flex items-center justify-center">
+                <img 
+                  src="/lovable-uploads/6b063d7c-1b98-4be1-b6fe-6da3e5cb5e4a.png" 
+                  alt="SolvynAI Logo" 
+                  className="w-8 h-8 dark:hidden"
+                />
+                <img 
+                  src="/lovable-uploads/41eba851-ad0b-4797-8b0e-7aeead41c3b1.png" 
+                  alt="SolvynAI Logo" 
+                  className="w-8 h-8 hidden dark:block"
+                />
               </div>
               <span className="font-bold text-xl text-gray-900 dark:text-white">SolvynAI</span>
+            </div>
+          )}
+          {isCollapsed && (
+            <div className="w-8 h-8 flex items-center justify-center">
+              <img 
+                src="/lovable-uploads/6b063d7c-1b98-4be1-b6fe-6da3e5cb5e4a.png" 
+                alt="SolvynAI Logo" 
+                className="w-8 h-8 dark:hidden"
+              />
+              <img 
+                src="/lovable-uploads/41eba851-ad0b-4797-8b0e-7aeead41c3b1.png" 
+                alt="SolvynAI Logo" 
+                className="w-8 h-8 hidden dark:block"
+              />
             </div>
           )}
           <Button
@@ -113,6 +146,7 @@ const Sidebar = () => {
         <Button
           variant="ghost"
           size="sm"
+          onClick={handleLogout}
           className={`w-full ${isCollapsed ? 'px-2' : 'justify-start'} text-gray-700 dark:text-gray-300 hover:text-red-500`}
         >
           <LogOut className="h-5 w-5" />

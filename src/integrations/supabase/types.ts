@@ -9,10 +9,111 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      focus_sessions: {
+        Row: {
+          completed_at: string
+          created_at: string
+          duration: number
+          id: string
+          task_description: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          duration: number
+          id?: string
+          task_description?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          duration?: number
+          id?: string
+          task_description?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string
+          gender: string
+          id: string
+          school_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          gender: string
+          id: string
+          school_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          gender?: string
+          id?: string
+          school_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      focus_leaderboard: {
+        Row: {
+          full_name: string | null
+          rank: number | null
+          school_name: string | null
+          total_focus_time: number | null
+          total_sessions: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
