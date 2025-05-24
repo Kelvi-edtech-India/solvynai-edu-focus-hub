@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -50,27 +51,6 @@ const DoubtSolver = () => {
     }
   };
 
-  // Show error state if there's an error
-  if (error) {
-    return (
-      <div className="p-6 max-w-6xl mx-auto space-y-6">
-        <Card className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
-          <CardHeader>
-            <CardTitle className="text-red-800 dark:text-red-200">Error</CardTitle>
-            <CardDescription className="text-red-700 dark:text-red-300">
-              {error}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => window.location.reload()} variant="outline">
-              Reload Page
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       {/* Header */}
@@ -85,6 +65,18 @@ const DoubtSolver = () => {
           </CardDescription>
         </CardHeader>
       </Card>
+
+      {/* Error Display */}
+      {error && (
+        <Card className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+          <CardHeader>
+            <CardTitle className="text-red-800 dark:text-red-200">Error</CardTitle>
+            <CardDescription className="text-red-700 dark:text-red-300">
+              {error}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Configuration */}
