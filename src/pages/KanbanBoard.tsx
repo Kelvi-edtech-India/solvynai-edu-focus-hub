@@ -5,15 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Layout, Plus, MoreHorizontal, User, Calendar } from 'lucide-react';
-
-interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  priority: 'low' | 'medium' | 'high';
-  assignee?: string;
-  dueDate?: string;
-}
+import { useTasks, Task } from '@/hooks/useTasks';
 
 interface Column {
   id: string;
@@ -22,92 +14,26 @@ interface Column {
 }
 
 const KanbanBoard = () => {
-  const [columns, setColumns] = useState<Column[]>([
-    {
-      id: 'todo',
-      title: 'To Do',
-      tasks: [
-        {
-          id: '1',
-          title: 'Complete Math homework',
-          description: 'Solve chapter 5 exercises',
-          priority: 'high',
-          assignee: 'You',
-          dueDate: '2024-01-25'
-        },
-        {
-          id: '2',
-          title: 'Prepare presentation',
-          priority: 'medium',
-          assignee: 'You',
-          dueDate: '2024-01-26'
-        }
-      ]
-    },
-    {
-      id: 'in-progress',
-      title: 'In Progress',
-      tasks: [
-        {
-          id: '3',
-          title: 'Review Physics notes',
-          description: 'Study thermodynamics concepts',
-          priority: 'medium',
-          assignee: 'You',
-          dueDate: '2024-01-24'
-        }
-      ]
-    },
-    {
-      id: 'review',
-      title: 'Review',
-      tasks: [
-        {
-          id: '4',
-          title: 'Chemistry lab report',
-          priority: 'low',
-          assignee: 'You',
-          dueDate: '2024-01-23'
-        }
-      ]
-    },
-    {
-      id: 'done',
-      title: 'Done',
-      tasks: [
-        {
-          id: '5',
-          title: 'History essay',
-          description: 'World War II research paper',
-          priority: 'high',
-          assignee: 'You',
-          dueDate: '2024-01-22'
-        }
-      ]
-    }
-  ]);
-
+  const { tasks, loading, error, addTask, updateTask } = useTasks();
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [activeColumn, setActiveColumn] = useState<string | null>(null);
 
-  const addTask = (columnId: string) => {
+  const handleAddTask = async (columnId: string) => {
     if (newTaskTitle.trim()) {
-      const newTask: Task = {
-        id: Date.now().toString(),
+      await addTask({
         title: newTaskTitle.trim(),
         priority: 'medium',
-        assignee: 'You'
-      };
-      
-      setColumns(columns.map(col => 
-        col.id === columnId 
-          ? { ...col, tasks: [...col.tasks, newTask] }
-          : col
-      ));
+        status: columnId as 'todo' | 'in-progress' | 'review' | 'done',
+        description: ''
+      });
       
       setNewTaskTitle('');
       setActiveColumn(null);
     }
+  };
+
+  const moveTask = async (taskId: string, newStatus: string) => {
+    await updateTask(taskId, { status: newStatus as 'todo' | 'in-progress' | 'review' | 'done' });
   };
 
   const getPriorityColor = (priority: string) => {
@@ -128,6 +54,55 @@ const KanbanBoard = () => {
       default: return 'border-t-4 border-t-gray-500';
     }
   };
+
+  const columns: Column[] = [
+    {
+      id: 'todo',
+      title: 'To Do',
+      tasks: tasks.filter(task => task.status === 'todo')
+    },
+    {
+      id: 'in-progress',
+      title: 'In Progress',
+      tasks: tasks.filter(task => task.status === 'in-progress')
+    },
+    {
+      id: 'review',
+      title: 'Review',
+      tasks: tasks.filter(task => task.status === 'review')
+    },
+    {
+      id: 'done',
+      title: 'Done',
+      tasks: tasks.filter(task => task.status === 'done')
+    }
+  ];
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading tasks...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 space-y-6">
+        <Card className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+          <CardHeader>
+            <CardTitle className="text-red-800 dark:text-red-200">Error</CardTitle>
+            <CardDescription className="text-red-700 dark:text-red-300">
+              {error}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -177,13 +152,13 @@ const KanbanBoard = () => {
                     placeholder="Enter task title"
                     value={newTaskTitle}
                     onChange={(e) => setNewTaskTitle(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addTask(column.id)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddTask(column.id)}
                     className="bg-gray-50 dark:bg-gray-700 text-sm"
                   />
                   <div className="flex space-x-2">
                     <Button
                       size="sm"
-                      onClick={() => addTask(column.id)}
+                      onClick={() => handleAddTask(column.id)}
                       className="flex-1"
                     >
                       Add
@@ -209,9 +184,12 @@ const KanbanBoard = () => {
                         <h4 className="font-medium text-sm text-gray-900 dark:text-white leading-tight">
                           {task.title}
                         </h4>
-                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
-                          <MoreHorizontal className="h-3 w-3" />
-                        </Button>
+                        <div className="relative">
+                          <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
+                            <MoreHorizontal className="h-3 w-3" />
+                          </Button>
+                          {/* You can add a dropdown menu here for task actions */}
+                        </div>
                       </div>
                       
                       {task.description && (
@@ -225,20 +203,50 @@ const KanbanBoard = () => {
                           {task.priority}
                         </Badge>
                         
-                        {task.dueDate && (
+                        {task.due_date && (
                           <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                             <Calendar className="h-3 w-3 mr-1" />
-                            {new Date(task.dueDate).toLocaleDateString()}
+                            {new Date(task.due_date).toLocaleDateString()}
                           </div>
                         )}
                       </div>
                       
-                      {task.assignee && (
-                        <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                          <User className="h-3 w-3 mr-1" />
-                          {task.assignee}
-                        </div>
-                      )}
+                      <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                        <User className="h-3 w-3 mr-1" />
+                        You
+                      </div>
+
+                      {/* Move task buttons */}
+                      <div className="flex space-x-1 pt-2">
+                        {column.id !== 'todo' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const newStatus = column.id === 'in-progress' ? 'todo' : 
+                                             column.id === 'review' ? 'in-progress' : 'review';
+                              moveTask(task.id, newStatus);
+                            }}
+                            className="text-xs px-2 py-1 h-6"
+                          >
+                            ←
+                          </Button>
+                        )}
+                        {column.id !== 'done' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const newStatus = column.id === 'todo' ? 'in-progress' : 
+                                             column.id === 'in-progress' ? 'review' : 'done';
+                              moveTask(task.id, newStatus);
+                            }}
+                            className="text-xs px-2 py-1 h-6"
+                          >
+                            →
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

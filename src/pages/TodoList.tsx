@@ -6,75 +6,37 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckSquare, Plus, Trash2, Calendar, Clock, Flag } from 'lucide-react';
-
-interface Task {
-  id: string;
-  title: string;
-  completed: boolean;
-  priority: 'low' | 'medium' | 'high';
-  dueDate?: string;
-  category: string;
-}
+import { CheckSquare, Plus, Trash2, Calendar, Flag } from 'lucide-react';
+import { useTasks, Task } from '@/hooks/useTasks';
 
 const TodoList = () => {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: '1',
-      title: 'Complete Math homework',
-      completed: false,
-      priority: 'high',
-      dueDate: '2024-01-25',
-      category: 'Academic'
-    },
-    {
-      id: '2',
-      title: 'Review Physics notes',
-      completed: true,
-      priority: 'medium',
-      dueDate: '2024-01-24',
-      category: 'Academic'
-    },
-    {
-      id: '3',
-      title: 'Prepare for English presentation',
-      completed: false,
-      priority: 'high',
-      dueDate: '2024-01-26',
-      category: 'Academic'
-    }
-  ]);
-
+  const { tasks, loading, error, addTask, updateTask, deleteTask, toggleTask } = useTasks();
   const [newTask, setNewTask] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
 
-  const addTask = () => {
+  const handleAddTask = async () => {
     if (newTask.trim()) {
-      const task: Task = {
-        id: Date.now().toString(),
+      await addTask({
         title: newTask.trim(),
-        completed: false,
         priority: 'medium',
-        category: 'Personal'
-      };
-      setTasks([...tasks, task]);
+        status: 'todo',
+        description: ''
+      });
       setNewTask('');
     }
   };
 
-  const toggleTask = (id: string) => {
-    setTasks(tasks.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
+  const handleToggleTask = async (id: string) => {
+    await toggleTask(id);
   };
 
-  const deleteTask = (id: string) => {
-    setTasks(tasks.filter(task => task.id !== id));
+  const handleDeleteTask = async (id: string) => {
+    await deleteTask(id);
   };
 
   const filteredTasks = tasks.filter(task => {
-    if (filter === 'active') return !task.completed;
-    if (filter === 'completed') return task.completed;
+    if (filter === 'active') return task.status !== 'done';
+    if (filter === 'completed') return task.status === 'done';
     return true;
   });
 
@@ -86,6 +48,32 @@ const TodoList = () => {
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto space-y-6">
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading tasks...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto space-y-6">
+        <Card className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+          <CardHeader>
+            <CardTitle className="text-red-800 dark:text-red-200">Error</CardTitle>
+            <CardDescription className="text-red-700 dark:text-red-300">
+              {error}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -113,10 +101,10 @@ const TodoList = () => {
               placeholder="What needs to be done?"
               value={newTask}
               onChange={(e) => setNewTask(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && addTask()}
+              onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
               className="flex-1 bg-gray-50 dark:bg-gray-700"
             />
-            <Button onClick={addTask} className="bg-orange-500 hover:bg-orange-600">
+            <Button onClick={handleAddTask} className="bg-orange-500 hover:bg-orange-600">
               <Plus className="h-4 w-4 mr-2" />
               Add Task
             </Button>
@@ -141,7 +129,7 @@ const TodoList = () => {
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {tasks.filter(t => t.completed).length}
+                {tasks.filter(t => t.status === 'done').length}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">Completed</div>
             </div>
@@ -152,7 +140,7 @@ const TodoList = () => {
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                {tasks.filter(t => !t.completed).length}
+                {tasks.filter(t => t.status !== 'done').length}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">Pending</div>
             </div>
@@ -195,20 +183,20 @@ const TodoList = () => {
                 <div
                   key={task.id}
                   className={`flex items-center space-x-4 p-4 rounded-lg border transition-all duration-200 ${
-                    task.completed 
+                    task.status === 'done'
                       ? 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 opacity-75' 
                       : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:shadow-md'
                   }`}
                 >
                   <Checkbox
-                    checked={task.completed}
-                    onCheckedChange={() => toggleTask(task.id)}
+                    checked={task.status === 'done'}
+                    onCheckedChange={() => handleToggleTask(task.id)}
                     className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                   />
                   
                   <div className="flex-1 min-w-0">
                     <div className={`font-medium ${
-                      task.completed 
+                      task.status === 'done'
                         ? 'line-through text-gray-500 dark:text-gray-400' 
                         : 'text-gray-900 dark:text-white'
                     }`}>
@@ -222,13 +210,13 @@ const TodoList = () => {
                       </Badge>
                       
                       <Badge variant="outline" className="text-xs">
-                        {task.category}
+                        Personal
                       </Badge>
                       
-                      {task.dueDate && (
+                      {task.due_date && (
                         <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                           <Calendar className="h-3 w-3 mr-1" />
-                          {task.dueDate}
+                          {new Date(task.due_date).toLocaleDateString()}
                         </div>
                       )}
                     </div>
@@ -237,7 +225,7 @@ const TodoList = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => deleteTask(task.id)}
+                    onClick={() => handleDeleteTask(task.id)}
                     className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                   >
                     <Trash2 className="h-4 w-4" />

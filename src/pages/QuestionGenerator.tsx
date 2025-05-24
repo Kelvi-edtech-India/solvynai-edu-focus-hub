@@ -1,11 +1,9 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Plus, Trash2, Download, Eye } from 'lucide-react';
 import { useAI } from '@/hooks/useAI';
@@ -25,7 +23,7 @@ interface Chapter {
 const QuestionGenerator = () => {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [chapterInput, setChapterInput] = useState('');
-  const { callAI, loading: isGenerating } = useAI();
+  const { callAI, loading: isGenerating, error } = useAI();
   const [grade, setGrade] = useState('');
   const [subject, setSubject] = useState('');
   const [board, setBoard] = useState('');
@@ -78,10 +76,10 @@ const QuestionGenerator = () => {
       return;
     }
 
-    // Create a detailed prompt for the AI
-    const totalMarks = getTotalMarks();
-    let chaptersDetails = chapters.map(chapter => {
-      return `
+    try {
+      const totalMarks = getTotalMarks();
+      let chaptersDetails = chapters.map(chapter => {
+        return `
 Chapter: ${chapter.name}
 - 1 Mark Questions (MCQ): ${chapter.mcq}
 - 2 Mark Questions: ${chapter.twoMark}
@@ -89,10 +87,10 @@ Chapter: ${chapter.name}
 - 4 Mark Questions: ${chapter.fourMark}
 - 5 Mark Questions: ${chapter.fiveMark}
 - 6 Mark Questions: ${chapter.sixMark}
-      `;
-    }).join('\n');
+        `;
+      }).join('\n');
 
-    const prompt = `
+      const prompt = `
 Generate a complete question paper with the following requirements:
 
 Subject: ${subject || 'General Subject'}
@@ -113,12 +111,18 @@ Please format the question paper with:
 Generate actual questions that are appropriate for the subject and grade level.
 `;
 
-    const result = await callAI(prompt, 'question-generator');
-    
-    if (result) {
-      setGeneratedQuestions(result.response);
-      setShowPreview(true);
-      toast.success('Question paper generated successfully!');
+      const result = await callAI(prompt, 'question-generator');
+      
+      if (result && result.response) {
+        setGeneratedQuestions(result.response);
+        setShowPreview(true);
+        toast.success('Question paper generated successfully!');
+      } else {
+        toast.error('Failed to generate question paper');
+      }
+    } catch (error) {
+      console.error('Error generating question paper:', error);
+      toast.error('An error occurred while generating the question paper');
     }
   };
 
@@ -135,6 +139,27 @@ Generate actual questions that are appropriate for the subject and grade level.
     
     toast.success('Question paper downloaded!');
   };
+
+  // Show error state if there's an error
+  if (error) {
+    return (
+      <div className="p-6 max-w-6xl mx-auto space-y-6">
+        <Card className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+          <CardHeader>
+            <CardTitle className="text-red-800 dark:text-red-200">Error</CardTitle>
+            <CardDescription className="text-red-700 dark:text-red-300">
+              {error}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => window.location.reload()} variant="outline">
+              Reload Page
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
@@ -184,19 +209,14 @@ Generate actual questions that are appropriate for the subject and grade level.
                 <div className="prose dark:prose-invert max-w-none">
                   {generatedQuestions.split('\n').map((paragraph, idx) => {
                     if (paragraph.trim().startsWith('#')) {
-                      // It's a heading
                       return <h3 key={idx} className="font-semibold text-gray-900 dark:text-gray-100 mt-4 mb-2">{paragraph.replace(/^#+\s/, '')}</h3>;
                     } else if (paragraph.trim().startsWith('##')) {
-                      // It's a subheading
                       return <h4 key={idx} className="font-semibold text-gray-800 dark:text-gray-200 mt-3 mb-2">{paragraph.replace(/^#+\s/, '')}</h4>;
                     } else if (paragraph.match(/^\d+\.\s/)) {
-                      // It's a numbered question
                       return <div key={idx} className="mb-3 pl-4 border-l-2 border-blue-300 dark:border-blue-700">{paragraph}</div>;
                     } else if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('*')) {
-                      // It's a list item
                       return <li key={idx} className="ml-4">{paragraph.substring(1).trim()}</li>;
                     } else if (paragraph.trim()) {
-                      // Regular paragraph with content
                       return <p key={idx} className="text-gray-700 dark:text-gray-300">{paragraph}</p>;
                     }
                     return <br key={idx} />;

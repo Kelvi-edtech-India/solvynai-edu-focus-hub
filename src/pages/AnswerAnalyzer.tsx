@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,7 @@ import { toast } from 'sonner';
 
 const AnswerAnalyzer = () => {
   const [analysisType, setAnalysisType] = useState<'text' | 'upload'>('text');
-  const { callAI, loading: isAnalyzing } = useAI();
+  const { callAI, loading: isAnalyzing, error } = useAI();
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [grade, setGrade] = useState('');
@@ -30,76 +29,104 @@ const AnswerAnalyzer = () => {
       return;
     }
 
-    const prompt = `
-      Please analyze this student answer:
-      
-      Question: ${question}
-      
-      Student Answer: ${answer}
-      
-      ${grade ? `Grade level: ${grade}` : ''}
-      ${subject ? `Subject: ${subject}` : ''}
-      ${board ? `Board of Education: ${board}` : ''}
-      
-      Provide a comprehensive analysis including:
-      1. Detailed feedback
-      2. Score out of 100
-      3. Accuracy percentage
-      4. Specific areas for improvement (list at least 3)
-      
-      Format your response in clear sections.
-    `;
+    try {
+      const prompt = `
+        Please analyze this student answer:
+        
+        Question: ${question}
+        
+        Student Answer: ${answer}
+        
+        ${grade ? `Grade level: ${grade}` : ''}
+        ${subject ? `Subject: ${subject}` : ''}
+        ${board ? `Board of Education: ${board}` : ''}
+        
+        Provide a comprehensive analysis including:
+        1. Detailed feedback
+        2. Score out of 100
+        3. Accuracy percentage
+        4. Specific areas for improvement (list at least 3)
+        
+        Format your response in clear sections.
+      `;
 
-    const result = await callAI(prompt, 'answer-analyzer');
-    
-    if (result) {
-      // Parse the AI response to extract structured data
-      const response = result.response;
-      let feedback = '';
-      let score = 0;
-      let accuracy = 0;
-      let areasToImprove: string[] = [];
+      const result = await callAI(prompt, 'answer-analyzer');
       
-      // Simple parsing logic - this could be improved with more sophisticated parsing
-      if (response.includes('Score') || response.includes('score')) {
-        const scoreMatch = response.match(/score:?\s*(\d+)/i);
-        if (scoreMatch && scoreMatch[1]) {
-          score = parseInt(scoreMatch[1], 10);
+      if (result && result.response) {
+        // Parse the AI response to extract structured data
+        const response = result.response;
+        let feedback = '';
+        let score = 0;
+        let accuracy = 0;
+        let areasToImprove: string[] = [];
+        
+        // Simple parsing logic - this could be improved with more sophisticated parsing
+        if (response.includes('Score') || response.includes('score')) {
+          const scoreMatch = response.match(/score:?\s*(\d+)/i);
+          if (scoreMatch && scoreMatch[1]) {
+            score = parseInt(scoreMatch[1], 10);
+          }
         }
-      }
-      
-      if (response.includes('Accuracy') || response.includes('accuracy')) {
-        const accuracyMatch = response.match(/accuracy:?\s*(\d+)/i);
-        if (accuracyMatch && accuracyMatch[1]) {
-          accuracy = parseInt(accuracyMatch[1], 10);
+        
+        if (response.includes('Accuracy') || response.includes('accuracy')) {
+          const accuracyMatch = response.match(/accuracy:?\s*(\d+)/i);
+          if (accuracyMatch && accuracyMatch[1]) {
+            accuracy = parseInt(accuracyMatch[1], 10);
+          }
         }
-      }
-      
-      if (response.includes('Areas for Improvement') || response.includes('areas to improve')) {
-        const improvementSection = response.split(/Areas for Improvement|areas to improve/i)[1];
-        if (improvementSection) {
-          areasToImprove = improvementSection
-            .split('\n')
-            .filter(line => line.trim().startsWith('-') || line.trim().startsWith('*') || /^\d+\./.test(line.trim()))
-            .map(line => line.replace(/^[-*\d.]+\s*/, '').trim())
-            .filter(item => item.length > 0);
+        
+        if (response.includes('Areas for Improvement') || response.includes('areas to improve')) {
+          const improvementSection = response.split(/Areas for Improvement|areas to improve/i)[1];
+          if (improvementSection) {
+            areasToImprove = improvementSection
+              .split('\n')
+              .filter(line => line.trim().startsWith('-') || line.trim().startsWith('*') || /^\d+\./.test(line.trim()))
+              .map(line => line.replace(/^[-*\d.]+\s*/, '').trim())
+              .filter(item => item.length > 0);
+          }
         }
+        
+        // Extract feedback (use everything else as feedback)
+        feedback = response;
+        
+        setAnalysis({
+          feedback,
+          score: score || Math.floor(Math.random() * 30) + 70, // Fallback score if parsing fails
+          accuracy: accuracy || Math.floor(Math.random() * 20) + 80, // Fallback accuracy if parsing fails
+          areasToImprove: areasToImprove.length > 0 ? areasToImprove : 
+            ['Clarity of explanation', 'Use of terminology', 'Depth of understanding'] // Fallback areas
+        });
+        
+        toast.success('Answer analyzed successfully!');
+      } else {
+        toast.error('Failed to analyze answer');
       }
-      
-      // Extract feedback (use everything else as feedback)
-      feedback = response;
-      
-      setAnalysis({
-        feedback,
-        score: score || Math.floor(Math.random() * 30) + 70, // Fallback score if parsing fails
-        accuracy: accuracy || Math.floor(Math.random() * 20) + 80, // Fallback accuracy if parsing fails
-        areasToImprove: areasToImprove.length > 0 ? areasToImprove : 
-          ['Clarity of explanation', 'Use of terminology', 'Depth of understanding'] // Fallback areas
-      });
-      
-      toast.success('Answer analyzed successfully!');
+    } catch (error) {
+      console.error('Error analyzing answer:', error);
+      toast.error('An error occurred while analyzing the answer');
     }
   };
+
+  // Show error state if there's an error
+  if (error) {
+    return (
+      <div className="p-6 max-w-6xl mx-auto space-y-6">
+        <Card className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+          <CardHeader>
+            <CardTitle className="text-red-800 dark:text-red-200">Error</CardTitle>
+            <CardDescription className="text-red-700 dark:text-red-300">
+              {error}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => window.location.reload()} variant="outline">
+              Reload Page
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
@@ -327,13 +354,10 @@ const AnswerAnalyzer = () => {
                   <div className="prose dark:prose-invert max-w-none">
                     {analysis.feedback.split('\n').map((paragraph, idx) => {
                       if (paragraph.trim().startsWith('#')) {
-                        // It's a heading
                         return <h4 key={idx} className="font-semibold text-gray-800 dark:text-gray-200 mt-3 mb-2">{paragraph.replace(/^#+\s/, '')}</h4>;
                       } else if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('*')) {
-                        // It's a list item
                         return <li key={idx} className="ml-4 text-gray-700 dark:text-gray-300">{paragraph.substring(1).trim()}</li>;
                       } else if (paragraph.trim()) {
-                        // Regular paragraph with content
                         return <p key={idx} className="text-gray-700 dark:text-gray-300 mb-2">{paragraph}</p>;
                       }
                       return null;
