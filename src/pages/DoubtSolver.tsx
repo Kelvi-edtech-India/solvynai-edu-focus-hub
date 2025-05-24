@@ -1,15 +1,16 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, HelpCircle, Lightbulb, BookOpen } from 'lucide-react';
+import { Upload, HelpCircle, Lightbulb, BookOpen, AlertCircle } from 'lucide-react';
 import { useAI } from '@/hooks/useAI';
 import { toast } from 'sonner';
 
 const DoubtSolver = () => {
+  console.log('DoubtSolver component rendering');
+  
   const [inputType, setInputType] = useState<'text' | 'upload'>('text');
   const { callAI, loading: isSolving, error } = useAI();
   const [question, setQuestion] = useState('');
@@ -19,6 +20,8 @@ const DoubtSolver = () => {
   const [solution, setSolution] = useState<string | null>(null);
 
   const solveDoubt = async () => {
+    console.log('solveDoubt function called');
+    
     if (!question.trim()) {
       toast.error('Please enter your question');
       return;
@@ -37,6 +40,7 @@ const DoubtSolver = () => {
         Please provide a step-by-step solution with clear explanations.
       `;
 
+      console.log('Calling AI with prompt');
       const result = await callAI(prompt, 'doubt-solver');
       
       if (result && result.response) {
@@ -70,7 +74,10 @@ const DoubtSolver = () => {
       {error && (
         <Card className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
           <CardHeader>
-            <CardTitle className="text-red-800 dark:text-red-200">Error</CardTitle>
+            <CardTitle className="flex items-center space-x-2 text-red-800 dark:text-red-200">
+              <AlertCircle className="h-5 w-5" />
+              <span>Error</span>
+            </CardTitle>
             <CardDescription className="text-red-700 dark:text-red-300">
               {error}
             </CardDescription>

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Plus, Trash2, Download, Eye } from 'lucide-react';
+import { FileText, Plus, Trash2, Download, Eye, AlertCircle } from 'lucide-react';
 import { useAI } from '@/hooks/useAI';
 import { toast } from 'sonner';
 
@@ -22,6 +21,8 @@ interface Chapter {
 }
 
 const QuestionGenerator = () => {
+  console.log('QuestionGenerator component rendering');
+  
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [chapterInput, setChapterInput] = useState('');
   const { callAI, loading: isGenerating, error } = useAI();
@@ -72,6 +73,8 @@ const QuestionGenerator = () => {
   };
 
   const generateQuestionPaper = async () => {
+    console.log('generateQuestionPaper function called');
+    
     if (chapters.length === 0) {
       toast.error('Please add at least one chapter');
       return;
@@ -112,6 +115,7 @@ Please format the question paper with:
 Generate actual questions that are appropriate for the subject and grade level.
 `;
 
+      console.log('Calling AI for question generation');
       const result = await callAI(prompt, 'question-generator');
       
       if (result && result.response) {
@@ -160,7 +164,10 @@ Generate actual questions that are appropriate for the subject and grade level.
       {error && (
         <Card className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
           <CardHeader>
-            <CardTitle className="text-red-800 dark:text-red-200">Error</CardTitle>
+            <CardTitle className="flex items-center space-x-2 text-red-800 dark:text-red-200">
+              <AlertCircle className="h-5 w-5" />
+              <span>Error</span>
+            </CardTitle>
             <CardDescription className="text-red-700 dark:text-red-300">
               {error}
             </CardDescription>

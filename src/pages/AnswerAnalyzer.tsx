@@ -1,15 +1,16 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, BookOpen, FileText, CheckCircle } from 'lucide-react';
+import { Upload, BookOpen, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAI } from '@/hooks/useAI';
 import { toast } from 'sonner';
 
 const AnswerAnalyzer = () => {
+  console.log('AnswerAnalyzer component rendering');
+  
   const [analysisType, setAnalysisType] = useState<'text' | 'upload'>('text');
   const { callAI, loading: isAnalyzing, error } = useAI();
   const [question, setQuestion] = useState('');
@@ -25,6 +26,8 @@ const AnswerAnalyzer = () => {
   } | null>(null);
 
   const analyzeAnswer = async () => {
+    console.log('analyzeAnswer function called');
+    
     if (!question.trim() || !answer.trim()) {
       toast.error('Please provide both the question and answer');
       return;
@@ -51,6 +54,7 @@ const AnswerAnalyzer = () => {
         Format your response in clear sections.
       `;
 
+      console.log('Calling AI for answer analysis');
       const result = await callAI(prompt, 'answer-analyzer');
       
       if (result && result.response) {
@@ -127,7 +131,10 @@ const AnswerAnalyzer = () => {
       {error && (
         <Card className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
           <CardHeader>
-            <CardTitle className="text-red-800 dark:text-red-200">Error</CardTitle>
+            <CardTitle className="flex items-center space-x-2 text-red-800 dark:text-red-200">
+              <AlertCircle className="h-5 w-5" />
+              <span>Error</span>
+            </CardTitle>
             <CardDescription className="text-red-700 dark:text-red-300">
               {error}
             </CardDescription>
