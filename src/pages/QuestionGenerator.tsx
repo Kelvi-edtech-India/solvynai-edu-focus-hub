@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { FileText, Plus, Trash2, Download, Eye, AlertCircle } from 'lucide-react';
 import { useAI } from '@/hooks/useAI';
 import { toast } from 'sonner';
+import { cleanAIResponse, formatMathematicalSymbols, downloadAsPDF } from '@/utils/formatUtils';
 
 interface Chapter {
   id: string;
@@ -134,15 +136,37 @@ Generate actual questions that are appropriate for the subject and grade level.
   const downloadQuestionPaper = () => {
     if (!generatedQuestions) return;
     
-    const element = document.createElement('a');
-    const file = new Blob([generatedQuestions], {type: 'text/plain'});
-    element.href = URL.createObjectURL(file);
-    element.download = `${subject || 'Subject'}_${grade || 'Grade'}_Question_Paper.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-    
-    toast.success('Question paper downloaded!');
+    const filename = `${subject || 'Subject'}_${grade || 'Grade'}_Question_Paper.pdf`;
+    downloadAsPDF(generatedQuestions, filename);
+    toast.success('Question paper PDF downloaded!');
+  };
+
+  const renderFormattedQuestions = (text: string) => {
+    const cleanText = formatMathematicalSymbols(cleanAIResponse(text));
+    return cleanText.split('\n\n').map((paragraph, idx) => {
+      if (paragraph.trim()) {
+        if (paragraph.toLowerCase().includes('section') || paragraph.toLowerCase().includes('part')) {
+          return (
+            <h3 key={idx} className="font-semibold text-gray-900 dark:text-gray-100 mt-6 mb-3 text-lg">
+              {paragraph}
+            </h3>
+          );
+        } else if (paragraph.match(/^\d+\./)) {
+          return (
+            <div key={idx} className="mb-4 pl-4 border-l-3 border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-r-lg">
+              <p className="text-gray-800 dark:text-gray-200 font-medium">{paragraph}</p>
+            </div>
+          );
+        } else {
+          return (
+            <p key={idx} className="text-gray-700 dark:text-gray-300 mb-3 text-base leading-relaxed">
+              {paragraph}
+            </p>
+          );
+        }
+      }
+      return <br key={idx} />;
+    });
   };
 
   return (
@@ -199,27 +223,14 @@ Generate actual questions that are appropriate for the subject and grade level.
                   className="bg-blue-500 hover:bg-blue-600 text-white"
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  Download
+                  Download PDF
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg">
                 <div className="prose dark:prose-invert max-w-none">
-                  {generatedQuestions.split('\n').map((paragraph, idx) => {
-                    if (paragraph.trim().startsWith('#')) {
-                      return <h3 key={idx} className="font-semibold text-gray-900 dark:text-gray-100 mt-4 mb-2">{paragraph.replace(/^#+\s/, '')}</h3>;
-                    } else if (paragraph.trim().startsWith('##')) {
-                      return <h4 key={idx} className="font-semibold text-gray-800 dark:text-gray-200 mt-3 mb-2">{paragraph.replace(/^#+\s/, '')}</h4>;
-                    } else if (paragraph.match(/^\d+\.\s/)) {
-                      return <div key={idx} className="mb-3 pl-4 border-l-2 border-blue-300 dark:border-blue-700">{paragraph}</div>;
-                    } else if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('*')) {
-                      return <li key={idx} className="ml-4">{paragraph.substring(1).trim()}</li>;
-                    } else if (paragraph.trim()) {
-                      return <p key={idx} className="text-gray-700 dark:text-gray-300">{paragraph}</p>;
-                    }
-                    return <br key={idx} />;
-                  })}
+                  {renderFormattedQuestions(generatedQuestions)}
                 </div>
               </div>
             </CardContent>

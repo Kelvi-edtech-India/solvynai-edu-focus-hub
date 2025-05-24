@@ -1,12 +1,14 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, HelpCircle, Lightbulb, BookOpen, AlertCircle } from 'lucide-react';
+import { Upload, HelpCircle, Lightbulb, BookOpen, AlertCircle, Download } from 'lucide-react';
 import { useAI } from '@/hooks/useAI';
 import { toast } from 'sonner';
+import { cleanAIResponse, formatMathematicalSymbols, downloadAsPDF } from '@/utils/formatUtils';
 
 const DoubtSolver = () => {
   console.log('DoubtSolver component rendering');
@@ -53,6 +55,40 @@ const DoubtSolver = () => {
       console.error('Error solving doubt:', error);
       toast.error('An error occurred while solving your doubt');
     }
+  };
+
+  const handleDownloadPDF = () => {
+    if (!solution) {
+      toast.error('No solution to download');
+      return;
+    }
+    
+    const filename = `${subject || 'Solution'}_${new Date().toISOString().split('T')[0]}.pdf`;
+    downloadAsPDF(solution, filename);
+    toast.success('PDF download started!');
+  };
+
+  const renderFormattedSolution = (text: string) => {
+    const cleanText = formatMathematicalSymbols(cleanAIResponse(text));
+    return cleanText.split('\n\n').map((paragraph, idx) => {
+      if (paragraph.trim()) {
+        if (paragraph.toLowerCase().includes('step')) {
+          return (
+            <div key={idx} className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
+              <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                {paragraph}
+              </h4>
+            </div>
+          );
+        }
+        return (
+          <p key={idx} className="text-gray-700 dark:text-gray-300 mb-3 text-base leading-relaxed">
+            {paragraph}
+          </p>
+        );
+      }
+      return null;
+    });
   };
 
   return (
@@ -243,28 +279,30 @@ const DoubtSolver = () => {
 
       {/* Solution */}
       <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-gray-900 dark:text-white">
-            <BookOpen className="h-5 w-5" />
-            <span>Solution</span>
-          </CardTitle>
-          <CardDescription className="text-gray-600 dark:text-gray-400">
-            Step-by-step solution and approach tutorial
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center space-x-2 text-gray-900 dark:text-white">
+              <BookOpen className="h-5 w-5" />
+              <span>Solution</span>
+            </CardTitle>
+            <CardDescription className="text-gray-600 dark:text-gray-400">
+              Step-by-step solution and approach tutorial
+            </CardDescription>
+          </div>
+          {solution && (
+            <Button 
+              onClick={handleDownloadPDF}
+              className="bg-blue-500 hover:bg-blue-600 text-white"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="space-y-6">
           {solution ? (
             <div className="prose dark:prose-invert max-w-none">
-              {solution.split('\n').map((paragraph, idx) => {
-                if (paragraph.trim().startsWith('#')) {
-                  return <h3 key={idx} className="font-semibold text-blue-800 dark:text-blue-200 mb-2">{paragraph.replace(/^#+\s/, '')}</h3>;
-                } else if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('*')) {
-                  return <li key={idx} className="ml-4">{paragraph.substring(1).trim()}</li>;
-                } else if (paragraph.trim()) {
-                  return <p key={idx} className="text-gray-700 dark:text-gray-300">{paragraph}</p>;
-                }
-                return null;
-              })}
+              {renderFormattedSolution(solution)}
             </div>
           ) : (
             <div className="space-y-4">
@@ -297,7 +335,7 @@ const DoubtSolver = () => {
               
               <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
                 <h4 className="font-semibold text-orange-800 dark:text-orange-200 mb-2">
-                  💡 How to Approach Similar Questions
+                  How to Approach Similar Questions
                 </h4>
                 <p className="text-orange-700 dark:text-orange-300">
                   The AI will provide general tips and strategies for solving similar types of questions.

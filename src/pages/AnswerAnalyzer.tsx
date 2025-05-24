@@ -1,12 +1,14 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, BookOpen, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, BookOpen, FileText, CheckCircle, AlertCircle, Download } from 'lucide-react';
 import { useAI } from '@/hooks/useAI';
 import { toast } from 'sonner';
+import { cleanAIResponse, formatMathematicalSymbols, downloadAsPDF } from '@/utils/formatUtils';
 
 const AnswerAnalyzer = () => {
   console.log('AnswerAnalyzer component rendering');
@@ -96,10 +98,10 @@ const AnswerAnalyzer = () => {
         
         setAnalysis({
           feedback,
-          score: score || Math.floor(Math.random() * 30) + 70, // Fallback score if parsing fails
-          accuracy: accuracy || Math.floor(Math.random() * 20) + 80, // Fallback accuracy if parsing fails
+          score: score || Math.floor(Math.random() * 30) + 70,
+          accuracy: accuracy || Math.floor(Math.random() * 20) + 80,
           areasToImprove: areasToImprove.length > 0 ? areasToImprove : 
-            ['Clarity of explanation', 'Use of terminology', 'Depth of understanding'] // Fallback areas
+            ['Clarity of explanation', 'Use of terminology', 'Depth of understanding']
         });
         
         toast.success('Answer analyzed successfully!');
@@ -110,6 +112,48 @@ const AnswerAnalyzer = () => {
       console.error('Error analyzing answer:', error);
       toast.error('An error occurred while analyzing the answer');
     }
+  };
+
+  const handleDownloadPDF = () => {
+    if (!analysis) {
+      toast.error('No analysis to download');
+      return;
+    }
+    
+    const content = `
+Analysis Report
+
+Question: ${question}
+
+Student Answer: ${answer}
+
+Score: ${analysis.score}/100
+Accuracy: ${analysis.accuracy}%
+
+Feedback:
+${analysis.feedback}
+
+Areas for Improvement:
+${analysis.areasToImprove.map((area, idx) => `${idx + 1}. ${area}`).join('\n')}
+    `;
+    
+    const filename = `Answer_Analysis_${new Date().toISOString().split('T')[0]}.pdf`;
+    downloadAsPDF(content, filename);
+    toast.success('PDF download started!');
+  };
+
+  const renderFormattedFeedback = (text: string) => {
+    const cleanText = formatMathematicalSymbols(cleanAIResponse(text));
+    return cleanText.split('\n\n').map((paragraph, idx) => {
+      if (paragraph.trim()) {
+        return (
+          <p key={idx} className="text-gray-700 dark:text-gray-300 mb-3 text-base leading-relaxed">
+            {paragraph}
+          </p>
+        );
+      }
+      return null;
+    });
   };
 
   return (
@@ -323,11 +367,22 @@ const AnswerAnalyzer = () => {
 
       {/* Analysis Results */}
       <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-gray-900 dark:text-white">Analysis Results</CardTitle>
-          <CardDescription className="text-gray-600 dark:text-gray-400">
-            AI-powered evaluation and feedback
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-gray-900 dark:text-white">Analysis Results</CardTitle>
+            <CardDescription className="text-gray-600 dark:text-gray-400">
+              AI-powered evaluation and feedback
+            </CardDescription>
+          </div>
+          {analysis && (
+            <Button 
+              onClick={handleDownloadPDF}
+              className="bg-blue-500 hover:bg-blue-600 text-white"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
           {analysis ? (
@@ -351,16 +406,7 @@ const AnswerAnalyzer = () => {
                 <h4 className="font-semibold text-gray-900 dark:text-white">Detailed Feedback:</h4>
                 <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                   <div className="prose dark:prose-invert max-w-none">
-                    {analysis.feedback.split('\n').map((paragraph, idx) => {
-                      if (paragraph.trim().startsWith('#')) {
-                        return <h4 key={idx} className="font-semibold text-gray-800 dark:text-gray-200 mt-3 mb-2">{paragraph.replace(/^#+\s/, '')}</h4>;
-                      } else if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('*')) {
-                        return <li key={idx} className="ml-4 text-gray-700 dark:text-gray-300">{paragraph.substring(1).trim()}</li>;
-                      } else if (paragraph.trim()) {
-                        return <p key={idx} className="text-gray-700 dark:text-gray-300 mb-2">{paragraph}</p>;
-                      }
-                      return null;
-                    })}
+                    {renderFormattedFeedback(analysis.feedback)}
                   </div>
                 </div>
                 
@@ -371,7 +417,7 @@ const AnswerAnalyzer = () => {
                       <div className="bg-orange-200 dark:bg-orange-800 rounded-full w-6 h-6 flex items-center justify-center mr-3 text-orange-800 dark:text-orange-200 font-medium">
                         {idx + 1}
                       </div>
-                      <span className="text-orange-800 dark:text-orange-200">{area}</span>
+                      <span className="text-orange-800 dark:text-orange-200">{formatMathematicalSymbols(cleanAIResponse(area))}</span>
                     </li>
                   ))}
                 </ul>
