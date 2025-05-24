@@ -16,6 +16,32 @@ export interface Task {
   updated_at?: string;
 }
 
+// Type guard to ensure priority is valid
+const isValidPriority = (priority: string): priority is 'low' | 'medium' | 'high' => {
+  return ['low', 'medium', 'high'].includes(priority);
+};
+
+// Type guard to ensure status is valid
+const isValidStatus = (status: string): status is 'todo' | 'in-progress' | 'review' | 'done' => {
+  return ['todo', 'in-progress', 'review', 'done'].includes(status);
+};
+
+// Function to transform Supabase data to Task interface
+const transformSupabaseTask = (data: any): Task => {
+  return {
+    id: data.id,
+    title: data.title,
+    description: data.description,
+    completed: data.status === 'done',
+    priority: isValidPriority(data.priority) ? data.priority : 'medium',
+    status: isValidStatus(data.status) ? data.status : 'todo',
+    due_date: data.due_date,
+    user_id: data.user_id,
+    created_at: data.created_at,
+    updated_at: data.updated_at
+  };
+};
+
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +70,8 @@ export function useTasks() {
         return;
       }
 
-      setTasks(data || []);
+      const transformedTasks = (data || []).map(transformSupabaseTask);
+      setTasks(transformedTasks);
       setError(null);
     } catch (err) {
       console.error('Error in fetchTasks:', err);
@@ -80,9 +107,10 @@ export function useTasks() {
         return null;
       }
 
-      setTasks(prev => [data, ...prev]);
+      const transformedTask = transformSupabaseTask(data);
+      setTasks(prev => [transformedTask, ...prev]);
       toast.success('Task added successfully');
-      return data;
+      return transformedTask;
     } catch (err) {
       console.error('Error in addTask:', err);
       toast.error('An error occurred while adding the task');
@@ -110,9 +138,10 @@ export function useTasks() {
         return null;
       }
 
-      setTasks(prev => prev.map(task => task.id === id ? data : task));
+      const transformedTask = transformSupabaseTask(data);
+      setTasks(prev => prev.map(task => task.id === id ? transformedTask : task));
       toast.success('Task updated successfully');
-      return data;
+      return transformedTask;
     } catch (err) {
       console.error('Error in updateTask:', err);
       toast.error('An error occurred while updating the task');
