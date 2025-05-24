@@ -1,3 +1,4 @@
+
 // Clean up AI response formatting by removing special characters and converting markdown-style formatting
 export const cleanAIResponse = (text: string): string => {
   return text
@@ -23,10 +24,74 @@ export const cleanAIResponse = (text: string): string => {
     .trim();
 };
 
-// Convert mathematical expressions to proper symbols
+// Convert LaTeX and mathematical expressions to proper Unicode symbols
 export const formatMathematicalSymbols = (text: string): string => {
   return text
+    // LaTeX fractions - handle \frac{numerator}{denominator}
+    .replace(/\\frac\{(\d+)\}\{(\d+)\}/g, (match, num, den) => {
+      // Convert common fractions to Unicode symbols
+      const fractionMap: { [key: string]: string } = {
+        '1/2': '½',
+        '1/3': '⅓',
+        '2/3': '⅔',
+        '1/4': '¼',
+        '3/4': '¾',
+        '1/5': '⅕',
+        '2/5': '⅖',
+        '3/5': '⅗',
+        '4/5': '⅘',
+        '1/6': '⅙',
+        '5/6': '⅚',
+        '1/7': '⅐',
+        '1/8': '⅛',
+        '3/8': '⅜',
+        '5/8': '⅝',
+        '7/8': '⅞',
+        '1/9': '⅑',
+        '1/10': '⅒'
+      };
+      
+      const fraction = `${num}/${den}`;
+      return fractionMap[fraction] || `${num}/${den}`;
+    })
+    // LaTeX parentheses
+    .replace(/\\left\(/g, '(')
+    .replace(/\\right\)/g, ')')
+    .replace(/\\\(/g, '')
+    .replace(/\\\)/g, '')
+    // LaTeX square roots
+    .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
+    // LaTeX superscripts
+    .replace(/\^(\d+)/g, (match, num) => {
+      const superscriptMap: { [key: string]: string } = {
+        '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+        '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'
+      };
+      return superscriptMap[num] || `^${num}`;
+    })
+    // LaTeX subscripts
+    .replace(/_(\d+)/g, (match, num) => {
+      const subscriptMap: { [key: string]: string } = {
+        '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄',
+        '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉'
+      };
+      return subscriptMap[num] || `_${num}`;
+    })
     // Greek letters
+    .replace(/\\alpha\b/gi, 'α')
+    .replace(/\\beta\b/gi, 'β')
+    .replace(/\\gamma\b/gi, 'γ')
+    .replace(/\\delta\b/gi, 'δ')
+    .replace(/\\epsilon\b/gi, 'ε')
+    .replace(/\\theta\b/gi, 'θ')
+    .replace(/\\lambda\b/gi, 'λ')
+    .replace(/\\mu\b/gi, 'μ')
+    .replace(/\\pi\b/gi, 'π')
+    .replace(/\\sigma\b/gi, 'σ')
+    .replace(/\\tau\b/gi, 'τ')
+    .replace(/\\phi\b/gi, 'φ')
+    .replace(/\\omega\b/gi, 'ω')
+    // Regular text Greek letters
     .replace(/\balpha\b/gi, 'α')
     .replace(/\bbeta\b/gi, 'β')
     .replace(/\bgamma\b/gi, 'γ')
@@ -41,6 +106,15 @@ export const formatMathematicalSymbols = (text: string): string => {
     .replace(/\bphi\b/gi, 'φ')
     .replace(/\bomega\b/gi, 'ω')
     // Mathematical operators
+    .replace(/\\pm\b/g, '±')
+    .replace(/\\mp\b/g, '∓')
+    .replace(/\\times\b/g, '×')
+    .replace(/\\div\b/g, '÷')
+    .replace(/\\cdot\b/g, '·')
+    .replace(/\\infty\b/g, '∞')
+    .replace(/\\sum\b/g, '∑')
+    .replace(/\\int\b/g, '∫')
+    .replace(/\\sqrt\b/g, '√')
     .replace(/\+\/-/g, '±')
     .replace(/\-\+/g, '∓')
     .replace(/\*\*/g, '^')
@@ -49,7 +123,7 @@ export const formatMathematicalSymbols = (text: string): string => {
     .replace(/\bintegral\b/gi, '∫')
     .replace(/\bsquare root\b/gi, '√')
     .replace(/\bsqrt\b/gi, '√')
-    // Fractions (basic)
+    // Regular fractions (basic)
     .replace(/1\/2/g, '½')
     .replace(/1\/3/g, '⅓')
     .replace(/2\/3/g, '⅔')
@@ -68,6 +142,10 @@ export const formatMathematicalSymbols = (text: string): string => {
     .replace(/CO2/g, 'CO₂')
     .replace(/NH3/g, 'NH₃')
     // Comparison operators
+    .replace(/\\geq\b/g, '≥')
+    .replace(/\\leq\b/g, '≤')
+    .replace(/\\neq\b/g, '≠')
+    .replace(/\\approx\b/g, '≈')
     .replace(/>=/g, '≥')
     .replace(/<=/g, '≤')
     .replace(/!=/g, '≠')
@@ -119,6 +197,10 @@ export const downloadAsPDF = (content: string, filename: string = 'document.pdf'
           font-family: 'Cambria Math', 'Times New Roman', serif;
           font-size: 16px;
         }
+        .fraction {
+          font-size: 18px;
+          font-weight: bold;
+        }
         @media print {
           body { margin: 20px; }
           .no-print { display: none; }
@@ -134,6 +216,10 @@ export const downloadAsPDF = (content: string, filename: string = 'document.pdf'
         ${cleanContent.split('\n\n').map((paragraph, index) => {
           if (paragraph.trim().toLowerCase().includes('step')) {
             return `<div class="step"><strong>Step ${index + 1}:</strong> ${paragraph}</div>`;
+          }
+          // Check if paragraph contains fractions and add special styling
+          if (paragraph.match(/[¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]/)) {
+            return `<p class="math fraction">${paragraph}</p>`;
           }
           return `<p class="math">${paragraph}</p>`;
         }).join('')}
