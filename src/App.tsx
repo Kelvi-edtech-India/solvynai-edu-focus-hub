@@ -18,8 +18,8 @@ const NotFound = lazy(() => import("@/pages/NotFound"));
 
 function App() {
   return (
-    <div className="min-h-screen bg-background">
-      <Suspense fallback={<div>Loading...</div>}>
+    <div className="w-full h-screen bg-background overflow-hidden">
+      <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route 

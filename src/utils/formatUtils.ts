@@ -29,71 +29,71 @@ export const cleanAIResponse = (text: string): string => {
     .trim();
 };
 
-// Prepare text for MathJax rendering by converting common patterns to LaTeX
+// Prepare text for KaTeX rendering by converting common patterns to LaTeX
 export const prepareMathContent = (text: string): string => {
   return text
     // Convert LaTeX fractions that are already properly formatted
-    .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '\\frac{$1}{$2}')
+    .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$\\frac{$1}{$2}$')
     
     // Convert basic fraction patterns
-    .replace(/frac\{([^}]+)\}\{([^}]+)\}/g, '\\frac{$1}{$2}')
-    .replace(/frac(\d+)(\d+)/g, '\\frac{$1}{$2}')
-    .replace(/(\d+)\/(\d+)/g, '\\frac{$1}{$2}')
+    .replace(/frac\{([^}]+)\}\{([^}]+)\}/g, '$\\frac{$1}{$2}$')
+    .replace(/frac(\d+)(\d+)/g, '$\\frac{$1}{$2}$')
+    .replace(/(\d+)\/(\d+)/g, '$\\frac{$1}{$2}$')
     
     // Convert trigonometric functions
-    .replace(/\bsin\s*/g, '\\sin ')
-    .replace(/\bcos\s*/g, '\\cos ')
-    .replace(/\btan\s*/g, '\\tan ')
-    .replace(/\bcot\s*/g, '\\cot ')
-    .replace(/\bsec\s*/g, '\\sec ')
-    .replace(/\bcsc\s*/g, '\\csc ')
+    .replace(/\bsin\s*/g, '$\\sin$ ')
+    .replace(/\bcos\s*/g, '$\\cos$ ')
+    .replace(/\btan\s*/g, '$\\tan$ ')
+    .replace(/\bcot\s*/g, '$\\cot$ ')
+    .replace(/\bsec\s*/g, '$\\sec$ ')
+    .replace(/\bcsc\s*/g, '$\\csc$ ')
     
     // Convert degree symbols
-    .replace(/(\d+)°/g, '$1^\\circ')
+    .replace(/(\d+)°/g, '$1^{\\circ}$')
     
     // Convert square roots
-    .replace(/sqrt\{([^}]+)\}/g, '\\sqrt{$1}')
-    .replace(/\\sqrt(\d+)/g, '\\sqrt{$1}')
-    .replace(/sqrt(\d+)/g, '\\sqrt{$1}')
+    .replace(/sqrt\{([^}]+)\}/g, '$\\sqrt{$1}$')
+    .replace(/\\sqrt(\d+)/g, '$\\sqrt{$1}$')
+    .replace(/sqrt(\d+)/g, '$\\sqrt{$1}$')
     
     // Convert superscripts and subscripts
     .replace(/\^(\d+)/g, '^{$1}')
     .replace(/_(\d+)/g, '_{$1}')
     
     // Convert Greek letters
-    .replace(/\\alpha\b/gi, '\\alpha')
-    .replace(/\\beta\b/gi, '\\beta')
-    .replace(/\\gamma\b/gi, '\\gamma')
-    .replace(/\\delta\b/gi, '\\delta')
-    .replace(/\\epsilon\b/gi, '\\epsilon')
-    .replace(/\\theta\b/gi, '\\theta')
-    .replace(/\\lambda\b/gi, '\\lambda')
-    .replace(/\\mu\b/gi, '\\mu')
-    .replace(/\\pi\b/gi, '\\pi')
-    .replace(/\\sigma\b/gi, '\\sigma')
-    .replace(/\\tau\b/gi, '\\tau')
-    .replace(/\\phi\b/gi, '\\phi')
-    .replace(/\\omega\b/gi, '\\omega')
+    .replace(/\\alpha\b/gi, '$\\alpha$')
+    .replace(/\\beta\b/gi, '$\\beta$')
+    .replace(/\\gamma\b/gi, '$\\gamma$')
+    .replace(/\\delta\b/gi, '$\\delta$')
+    .replace(/\\epsilon\b/gi, '$\\epsilon$')
+    .replace(/\\theta\b/gi, '$\\theta$')
+    .replace(/\\lambda\b/gi, '$\\lambda$')
+    .replace(/\\mu\b/gi, '$\\mu$')
+    .replace(/\\pi\b/gi, '$\\pi$')
+    .replace(/\\sigma\b/gi, '$\\sigma$')
+    .replace(/\\tau\b/gi, '$\\tau$')
+    .replace(/\\phi\b/gi, '$\\phi$')
+    .replace(/\\omega\b/gi, '$\\omega$')
     
     // Convert mathematical operators
-    .replace(/\\pm\b/g, '\\pm')
-    .replace(/\\mp\b/g, '\\mp')
-    .replace(/\\times\b/g, '\\times')
-    .replace(/\\div\b/g, '\\div')
-    .replace(/\\cdot\b/g, '\\cdot')
-    .replace(/\\infty\b/g, '\\infty')
-    .replace(/\\sum\b/g, '\\sum')
-    .replace(/\\int\b/g, '\\int')
+    .replace(/\\pm\b/g, '$\\pm$')
+    .replace(/\\mp\b/g, '$\\mp$')
+    .replace(/\\times\b/g, '$\\times$')
+    .replace(/\\div\b/g, '$\\div$')
+    .replace(/\\cdot\b/g, '$\\cdot$')
+    .replace(/\\infty\b/g, '$\\infty$')
+    .replace(/\\sum\b/g, '$\\sum$')
+    .replace(/\\int\b/g, '$\\int$')
     
     // Convert comparison operators
-    .replace(/\\geq\b/g, '\\geq')
-    .replace(/\\leq\b/g, '\\leq')
-    .replace(/\\neq\b/g, '\\neq')
-    .replace(/\\approx\b/g, '\\approx')
-    .replace(/>=/g, '\\geq')
-    .replace(/<=/g, '\\leq')
-    .replace(/!=/g, '\\neq')
-    .replace(/~=/g, '\\approx');
+    .replace(/\\geq\b/g, '$\\geq$')
+    .replace(/\\leq\b/g, '$\\leq$')
+    .replace(/\\neq\b/g, '$\\neq$')
+    .replace(/\\approx\b/g, '$\\approx$')
+    .replace(/>=/g, '$\\geq$')
+    .replace(/<=/g, '$\\leq$')
+    .replace(/!=/g, '$\\neq$')
+    .replace(/~=/g, '$\\approx$');
 };
 
 // Legacy function for backward compatibility
@@ -101,7 +101,7 @@ export const formatMathematicalSymbols = (text: string): string => {
   return prepareMathContent(text);
 };
 
-// Generate and download PDF with properly formatted math
+// Generate and download PDF with properly formatted math using KaTeX
 export const downloadAsPDF = (content: string, filename: string = 'document.pdf') => {
   // Create a new window for PDF generation
   const printWindow = window.open('', '_blank');
@@ -113,28 +113,16 @@ export const downloadAsPDF = (content: string, filename: string = 'document.pdf'
   // Clean and format the content
   const cleanContent = prepareMathContent(cleanAIResponse(content));
   
-  // Create HTML content for PDF with MathJax support
+  // Create HTML content for PDF with KaTeX support
   const htmlContent = `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="UTF-8">
       <title>${filename}</title>
-      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-      <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-      <script>
-        window.MathJax = {
-          tex: {
-            inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
-            displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']],
-            processEscapes: true,
-            processEnvironments: true
-          },
-          options: {
-            skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
-          }
-        };
-      </script>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+      <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
       <style>
         body {
           font-family: 'Times New Roman', serif;
@@ -157,13 +145,11 @@ export const downloadAsPDF = (content: string, filename: string = 'document.pdf'
           border-left: 3px solid #007bff;
           background-color: #f8f9fa;
         }
-        .math {
-          font-family: 'Cambria Math', 'Times New Roman', serif;
-          font-size: 16px;
+        .katex {
+          font-size: 1.1em;
         }
-        .fraction {
-          font-size: 18px;
-          font-weight: bold;
+        .katex-display {
+          margin: 1em 0;
         }
         @media print {
           body { margin: 20px; }
@@ -181,19 +167,25 @@ export const downloadAsPDF = (content: string, filename: string = 'document.pdf'
           if (paragraph.trim().toLowerCase().includes('step')) {
             return `<div class="step"><strong>Step ${index + 1}:</strong> ${paragraph}</div>`;
           }
-          return `<p class="math">${paragraph}</p>`;
+          return `<p>${paragraph}</p>`;
         }).join('')}
       </div>
       <script>
-        window.onload = function() {
-          // Wait for MathJax to process before printing
+        document.addEventListener("DOMContentLoaded", function() {
+          renderMathInElement(document.body, {
+            delimiters: [
+              {left: "$$", right: "$$", display: true},
+              {left: "$", right: "$", display: false}
+            ]
+          });
+          
           setTimeout(() => {
             window.print();
             window.onafterprint = function() {
               window.close();
             };
-          }, 2000);
-        };
+          }, 1000);
+        });
       </script>
     </body>
     </html>
