@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { FileText, Plus, Trash2, Download, Eye, AlertCircle } from 'lucide-react';
 import { useAI } from '@/hooks/useAI';
 import { toast } from 'sonner';
-import { cleanAIResponse, formatMathematicalSymbols, downloadAsPDF } from '@/utils/formatUtils';
+import { cleanAIResponse, prepareMathContent, downloadAsPDF } from '@/utils/formatUtils';
+import MathRenderer from '@/components/MathRenderer';
 
 interface Chapter {
   id: string;
@@ -114,7 +114,7 @@ Please format the question paper with:
 4. Time duration recommendation
 5. General instructions at the beginning
 
-Generate actual questions that are appropriate for the subject and grade level.
+Generate actual questions that are appropriate for the subject and grade level. Use proper mathematical notation where applicable, including fractions using \frac{numerator}{denominator} format, trigonometric functions, and mathematical symbols.
 `;
 
       console.log('Calling AI for question generation');
@@ -142,26 +142,28 @@ Generate actual questions that are appropriate for the subject and grade level.
   };
 
   const renderFormattedQuestions = (text: string) => {
-    const cleanText = formatMathematicalSymbols(cleanAIResponse(text));
+    const cleanText = prepareMathContent(cleanAIResponse(text));
     return cleanText.split('\n\n').map((paragraph, idx) => {
       if (paragraph.trim()) {
         if (paragraph.toLowerCase().includes('section') || paragraph.toLowerCase().includes('part')) {
           return (
             <h3 key={idx} className="font-semibold text-gray-900 dark:text-gray-100 mt-6 mb-3 text-lg">
-              {paragraph}
+              <MathRenderer content={paragraph} />
             </h3>
           );
         } else if (paragraph.match(/^\d+\./)) {
           return (
             <div key={idx} className="mb-4 pl-4 border-l-3 border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-r-lg">
-              <p className="text-gray-800 dark:text-gray-200 font-medium">{paragraph}</p>
+              <div className="text-gray-800 dark:text-gray-200 font-medium">
+                <MathRenderer content={paragraph} />
+              </div>
             </div>
           );
         } else {
           return (
-            <p key={idx} className="text-gray-700 dark:text-gray-300 mb-3 text-base leading-relaxed">
-              {paragraph}
-            </p>
+            <div key={idx} className="text-gray-700 dark:text-gray-300 mb-3 text-base leading-relaxed">
+              <MathRenderer content={paragraph} />
+            </div>
           );
         }
       }

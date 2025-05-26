@@ -1,4 +1,3 @@
-
 // Clean up AI response formatting by removing special characters and converting markdown-style formatting
 export const cleanAIResponse = (text: string): string => {
   return text
@@ -16,143 +15,93 @@ export const cleanAIResponse = (text: string): string => {
     // Remove code block markers
     .replace(/```[a-zA-Z]*\n?/g, '')
     .replace(/`([^`]+)`/g, '$1')
-    // Remove other special characters but keep mathematical symbols
-    .replace(/[!@#$%^&*()_+=\[\]{};':"\\|,.<>?~`]/g, '')
+    // Remove other special characters but keep mathematical symbols and LaTeX
+    .replace(/[!@#$%^&*()_+=\[\]{};':"\\|,.<>?~`]/g, (match) => {
+      // Keep mathematical symbols and LaTeX commands
+      if (/[\\]|[{}]|\^|_|\$/.test(match)) {
+        return match;
+      }
+      return '';
+    })
     // Clean up multiple spaces and newlines
     .replace(/\s+/g, ' ')
     .replace(/\n\s*\n/g, '\n\n')
     .trim();
 };
 
-// Convert LaTeX and mathematical expressions to proper Unicode symbols
-export const formatMathematicalSymbols = (text: string): string => {
+// Prepare text for MathJax rendering by converting common patterns to LaTeX
+export const prepareMathContent = (text: string): string => {
   return text
-    // LaTeX fractions - handle \frac{numerator}{denominator}
-    .replace(/\\frac\{(\d+)\}\{(\d+)\}/g, (match, num, den) => {
-      // Convert common fractions to Unicode symbols
-      const fractionMap: { [key: string]: string } = {
-        '1/2': '½',
-        '1/3': '⅓',
-        '2/3': '⅔',
-        '1/4': '¼',
-        '3/4': '¾',
-        '1/5': '⅕',
-        '2/5': '⅖',
-        '3/5': '⅗',
-        '4/5': '⅘',
-        '1/6': '⅙',
-        '5/6': '⅚',
-        '1/7': '⅐',
-        '1/8': '⅛',
-        '3/8': '⅜',
-        '5/8': '⅝',
-        '7/8': '⅞',
-        '1/9': '⅑',
-        '1/10': '⅒'
-      };
-      
-      const fraction = `${num}/${den}`;
-      return fractionMap[fraction] || `${num}/${den}`;
-    })
-    // LaTeX parentheses
-    .replace(/\\left\(/g, '(')
-    .replace(/\\right\)/g, ')')
-    .replace(/\\\(/g, '')
-    .replace(/\\\)/g, '')
-    // LaTeX square roots
-    .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
-    // LaTeX superscripts
-    .replace(/\^(\d+)/g, (match, num) => {
-      const superscriptMap: { [key: string]: string } = {
-        '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
-        '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'
-      };
-      return superscriptMap[num] || `^${num}`;
-    })
-    // LaTeX subscripts
-    .replace(/_(\d+)/g, (match, num) => {
-      const subscriptMap: { [key: string]: string } = {
-        '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄',
-        '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉'
-      };
-      return subscriptMap[num] || `_${num}`;
-    })
-    // Greek letters
-    .replace(/\\alpha\b/gi, 'α')
-    .replace(/\\beta\b/gi, 'β')
-    .replace(/\\gamma\b/gi, 'γ')
-    .replace(/\\delta\b/gi, 'δ')
-    .replace(/\\epsilon\b/gi, 'ε')
-    .replace(/\\theta\b/gi, 'θ')
-    .replace(/\\lambda\b/gi, 'λ')
-    .replace(/\\mu\b/gi, 'μ')
-    .replace(/\\pi\b/gi, 'π')
-    .replace(/\\sigma\b/gi, 'σ')
-    .replace(/\\tau\b/gi, 'τ')
-    .replace(/\\phi\b/gi, 'φ')
-    .replace(/\\omega\b/gi, 'ω')
-    // Regular text Greek letters
-    .replace(/\balpha\b/gi, 'α')
-    .replace(/\bbeta\b/gi, 'β')
-    .replace(/\bgamma\b/gi, 'γ')
-    .replace(/\bdelta\b/gi, 'δ')
-    .replace(/\bepsilon\b/gi, 'ε')
-    .replace(/\btheta\b/gi, 'θ')
-    .replace(/\blambda\b/gi, 'λ')
-    .replace(/\bmu\b/gi, 'μ')
-    .replace(/\bpi\b/gi, 'π')
-    .replace(/\bsigma\b/gi, 'σ')
-    .replace(/\btau\b/gi, 'τ')
-    .replace(/\bphi\b/gi, 'φ')
-    .replace(/\bomega\b/gi, 'ω')
-    // Mathematical operators
-    .replace(/\\pm\b/g, '±')
-    .replace(/\\mp\b/g, '∓')
-    .replace(/\\times\b/g, '×')
-    .replace(/\\div\b/g, '÷')
-    .replace(/\\cdot\b/g, '·')
-    .replace(/\\infty\b/g, '∞')
-    .replace(/\\sum\b/g, '∑')
-    .replace(/\\int\b/g, '∫')
-    .replace(/\\sqrt\b/g, '√')
-    .replace(/\+\/-/g, '±')
-    .replace(/\-\+/g, '∓')
-    .replace(/\*\*/g, '^')
-    .replace(/\binfinity\b/gi, '∞')
-    .replace(/\bsum\b/gi, '∑')
-    .replace(/\bintegral\b/gi, '∫')
-    .replace(/\bsquare root\b/gi, '√')
-    .replace(/\bsqrt\b/gi, '√')
-    // Regular fractions (basic)
-    .replace(/1\/2/g, '½')
-    .replace(/1\/3/g, '⅓')
-    .replace(/2\/3/g, '⅔')
-    .replace(/1\/4/g, '¼')
-    .replace(/3\/4/g, '¾')
-    .replace(/1\/5/g, '⅕')
-    .replace(/1\/6/g, '⅙')
-    .replace(/1\/8/g, '⅛')
-    // Superscripts for common powers
-    .replace(/\^2\b/g, '²')
-    .replace(/\^3\b/g, '³')
-    .replace(/\^4\b/g, '⁴')
-    .replace(/\^5\b/g, '⁵')
-    // Subscripts for common chemical formulas
-    .replace(/H2O/g, 'H₂O')
-    .replace(/CO2/g, 'CO₂')
-    .replace(/NH3/g, 'NH₃')
-    // Comparison operators
-    .replace(/\\geq\b/g, '≥')
-    .replace(/\\leq\b/g, '≤')
-    .replace(/\\neq\b/g, '≠')
-    .replace(/\\approx\b/g, '≈')
-    .replace(/>=/g, '≥')
-    .replace(/<=/g, '≤')
-    .replace(/!=/g, '≠')
-    .replace(/~=/g, '≈');
+    // Convert LaTeX fractions that are already properly formatted
+    .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '\\frac{$1}{$2}')
+    
+    // Convert basic fraction patterns
+    .replace(/frac\{([^}]+)\}\{([^}]+)\}/g, '\\frac{$1}{$2}')
+    .replace(/frac(\d+)(\d+)/g, '\\frac{$1}{$2}')
+    .replace(/(\d+)\/(\d+)/g, '\\frac{$1}{$2}')
+    
+    // Convert trigonometric functions
+    .replace(/\bsin\s*/g, '\\sin ')
+    .replace(/\bcos\s*/g, '\\cos ')
+    .replace(/\btan\s*/g, '\\tan ')
+    .replace(/\bcot\s*/g, '\\cot ')
+    .replace(/\bsec\s*/g, '\\sec ')
+    .replace(/\bcsc\s*/g, '\\csc ')
+    
+    // Convert degree symbols
+    .replace(/(\d+)°/g, '$1^\\circ')
+    
+    // Convert square roots
+    .replace(/sqrt\{([^}]+)\}/g, '\\sqrt{$1}')
+    .replace(/\\sqrt(\d+)/g, '\\sqrt{$1}')
+    .replace(/sqrt(\d+)/g, '\\sqrt{$1}')
+    
+    // Convert superscripts and subscripts
+    .replace(/\^(\d+)/g, '^{$1}')
+    .replace(/_(\d+)/g, '_{$1}')
+    
+    // Convert Greek letters
+    .replace(/\\alpha\b/gi, '\\alpha')
+    .replace(/\\beta\b/gi, '\\beta')
+    .replace(/\\gamma\b/gi, '\\gamma')
+    .replace(/\\delta\b/gi, '\\delta')
+    .replace(/\\epsilon\b/gi, '\\epsilon')
+    .replace(/\\theta\b/gi, '\\theta')
+    .replace(/\\lambda\b/gi, '\\lambda')
+    .replace(/\\mu\b/gi, '\\mu')
+    .replace(/\\pi\b/gi, '\\pi')
+    .replace(/\\sigma\b/gi, '\\sigma')
+    .replace(/\\tau\b/gi, '\\tau')
+    .replace(/\\phi\b/gi, '\\phi')
+    .replace(/\\omega\b/gi, '\\omega')
+    
+    // Convert mathematical operators
+    .replace(/\\pm\b/g, '\\pm')
+    .replace(/\\mp\b/g, '\\mp')
+    .replace(/\\times\b/g, '\\times')
+    .replace(/\\div\b/g, '\\div')
+    .replace(/\\cdot\b/g, '\\cdot')
+    .replace(/\\infty\b/g, '\\infty')
+    .replace(/\\sum\b/g, '\\sum')
+    .replace(/\\int\b/g, '\\int')
+    
+    // Convert comparison operators
+    .replace(/\\geq\b/g, '\\geq')
+    .replace(/\\leq\b/g, '\\leq')
+    .replace(/\\neq\b/g, '\\neq')
+    .replace(/\\approx\b/g, '\\approx')
+    .replace(/>=/g, '\\geq')
+    .replace(/<=/g, '\\leq')
+    .replace(/!=/g, '\\neq')
+    .replace(/~=/g, '\\approx');
 };
 
-// Generate and download PDF
+// Legacy function for backward compatibility
+export const formatMathematicalSymbols = (text: string): string => {
+  return prepareMathContent(text);
+};
+
+// Generate and download PDF with properly formatted math
 export const downloadAsPDF = (content: string, filename: string = 'document.pdf') => {
   // Create a new window for PDF generation
   const printWindow = window.open('', '_blank');
@@ -162,15 +111,30 @@ export const downloadAsPDF = (content: string, filename: string = 'document.pdf'
   }
 
   // Clean and format the content
-  const cleanContent = formatMathematicalSymbols(cleanAIResponse(content));
+  const cleanContent = prepareMathContent(cleanAIResponse(content));
   
-  // Create HTML content for PDF
+  // Create HTML content for PDF with MathJax support
   const htmlContent = `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="UTF-8">
       <title>${filename}</title>
+      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script>
+        window.MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+            displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']],
+            processEscapes: true,
+            processEnvironments: true
+          },
+          options: {
+            skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+          }
+        };
+      </script>
       <style>
         body {
           font-family: 'Times New Roman', serif;
@@ -217,19 +181,18 @@ export const downloadAsPDF = (content: string, filename: string = 'document.pdf'
           if (paragraph.trim().toLowerCase().includes('step')) {
             return `<div class="step"><strong>Step ${index + 1}:</strong> ${paragraph}</div>`;
           }
-          // Check if paragraph contains fractions and add special styling
-          if (paragraph.match(/[¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]/)) {
-            return `<p class="math fraction">${paragraph}</p>`;
-          }
           return `<p class="math">${paragraph}</p>`;
         }).join('')}
       </div>
       <script>
         window.onload = function() {
-          window.print();
-          window.onafterprint = function() {
-            window.close();
-          };
+          // Wait for MathJax to process before printing
+          setTimeout(() => {
+            window.print();
+            window.onafterprint = function() {
+              window.close();
+            };
+          }, 2000);
         };
       </script>
     </body>

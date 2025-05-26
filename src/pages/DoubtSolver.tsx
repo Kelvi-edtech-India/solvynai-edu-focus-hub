@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Upload, HelpCircle, Lightbulb, BookOpen, AlertCircle, Download } from 'lucide-react';
 import { useAI } from '@/hooks/useAI';
 import { toast } from 'sonner';
-import { cleanAIResponse, formatMathematicalSymbols, downloadAsPDF } from '@/utils/formatUtils';
+import { cleanAIResponse, prepareMathContent, downloadAsPDF } from '@/utils/formatUtils';
+import MathRenderer from '@/components/MathRenderer';
 
 const DoubtSolver = () => {
   console.log('DoubtSolver component rendering');
@@ -39,7 +39,7 @@ const DoubtSolver = () => {
         ${subject ? `Subject: ${subject}` : ''}
         ${board ? `Board of Education: ${board}` : ''}
         
-        Please provide a step-by-step solution with clear explanations.
+        Please provide a step-by-step solution with clear explanations. Use proper mathematical notation including fractions, symbols, and equations.
       `;
 
       console.log('Calling AI with prompt');
@@ -69,22 +69,22 @@ const DoubtSolver = () => {
   };
 
   const renderFormattedSolution = (text: string) => {
-    const cleanText = formatMathematicalSymbols(cleanAIResponse(text));
+    const cleanText = prepareMathContent(cleanAIResponse(text));
     return cleanText.split('\n\n').map((paragraph, idx) => {
       if (paragraph.trim()) {
         if (paragraph.toLowerCase().includes('step')) {
           return (
             <div key={idx} className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
               <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
-                {paragraph}
+                <MathRenderer content={paragraph} />
               </h4>
             </div>
           );
         }
         return (
-          <p key={idx} className="text-gray-700 dark:text-gray-300 mb-3 text-base leading-relaxed">
-            {paragraph}
-          </p>
+          <div key={idx} className="text-gray-700 dark:text-gray-300 mb-3 text-base leading-relaxed">
+            <MathRenderer content={paragraph} />
+          </div>
         );
       }
       return null;
