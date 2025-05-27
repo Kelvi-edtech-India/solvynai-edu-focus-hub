@@ -23,15 +23,14 @@ export const useFocusLeaderboard = () => {
 
   const fetchLeaderboard = async () => {
     try {
-      const { data, error } = await supabase
+      // First, try to fetch from the existing view
+      const { data: viewData, error: viewError } = await supabase
         .from('focus_leaderboard')
         .select('*')
         .limit(10);
 
-      if (error) {
-        console.error('Error fetching leaderboard:', error);
-      } else {
-        setLeaderboard(data || []);
+      if (viewData && viewData.length > 0) {
+        setLeaderboard(viewData);
         
         // Find current user's rank
         if (user) {
@@ -41,6 +40,51 @@ export const useFocusLeaderboard = () => {
           
           if (!allError && allData) {
             const currentUserRank = allData.find(entry => 
+              entry.full_name === user.user_metadata?.full_name
+            );
+            setUserRank(currentUserRank || null);
+          }
+        }
+      } else {
+        // If view doesn't exist or is empty, calculate from focus_sessions table
+        const { data: sessionData, error: sessionError } = await supabase
+          .from('focus_sessions')
+          .select(`
+            user_id,
+            duration_minutes,
+            profiles!inner(full_name, school_name)
+          `);
+
+        if (!sessionError && sessionData) {
+          // Aggregate data by user
+          const userStats = sessionData.reduce((acc: any, session: any) => {
+            const userId = session.user_id;
+            if (!acc[userId]) {
+              acc[userId] = {
+                full_name: session.profiles.full_name,
+                school_name: session.profiles.school_name,
+                total_focus_time: 0,
+                total_sessions: 0
+              };
+            }
+            acc[userId].total_focus_time += session.duration_minutes;
+            acc[userId].total_sessions += 1;
+            return acc;
+          }, {});
+
+          // Convert to array and sort
+          const leaderboardData = Object.values(userStats)
+            .sort((a: any, b: any) => b.total_focus_time - a.total_focus_time)
+            .map((entry: any, index: number) => ({
+              ...entry,
+              rank: index + 1
+            }));
+
+          setLeaderboard(leaderboardData.slice(0, 10));
+          
+          // Find current user's rank
+          if (user) {
+            const currentUserRank = leaderboardData.find((entry: any) => 
               entry.full_name === user.user_metadata?.full_name
             );
             setUserRank(currentUserRank || null);
