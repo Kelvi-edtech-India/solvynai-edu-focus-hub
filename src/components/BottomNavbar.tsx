@@ -3,7 +3,6 @@ import {
   Home, 
   FileText, 
   BookOpen, 
-  HelpCircle, 
   CheckSquare, 
   Timer, 
   User
@@ -19,6 +18,7 @@ const BottomNavbar = () => {
     { icon: Home, label: 'Home', path: '/' },
     { icon: FileText, label: 'Generate', path: '/question-generator' },
     { icon: BookOpen, label: 'Analyze', path: '/answer-analyzer' },
+    { icon: CheckSquare, label: 'Todo', path: '/todo' },
     { icon: Timer, label: 'Focus', path: '/focus' },
     { icon: User, label: 'Profile', path: '/profile' },
   ];

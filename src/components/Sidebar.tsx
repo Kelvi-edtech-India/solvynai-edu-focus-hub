@@ -1,5 +1,4 @@
 
-import { useState } from 'react';
 import { 
   Home, 
   User, 
@@ -12,8 +11,8 @@ import {
   Sun, 
   Moon, 
   LogOut,
-  Menu,
-  X
+  PanelLeftClose,
+  PanelLeftOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
@@ -22,9 +21,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useSidebar } from '@/contexts/SidebarContext';
 
 const Sidebar = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const { isCollapsed, toggleSidebar } = useSidebar();
   const { theme, setTheme } = useTheme();
   const location = useLocation();
   const { signOut } = useAuth();
@@ -76,27 +76,13 @@ const Sidebar = () => {
               <span className="font-bold text-xl text-gray-900 dark:text-white">SolvynAI</span>
             </div>
           )}
-          {isCollapsed && (
-            <div className="w-8 h-8 flex items-center justify-center mx-auto">
-              <img 
-                src="/lovable-uploads/6b063d7c-1b98-4be1-b6fe-6da3e5cb5e4a.png" 
-                alt="SolvynAI Logo" 
-                className="w-8 h-8 dark:hidden"
-              />
-              <img 
-                src="/lovable-uploads/41eba851-ad0b-4797-8b0e-7aeead41c3b1.png" 
-                alt="SolvynAI Logo" 
-                className="w-8 h-8 hidden dark:block"
-              />
-            </div>
-          )}
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={toggleSidebar}
             className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 h-8 w-8 p-0 flex items-center justify-center"
           >
-            {isCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
+            {isCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
           </Button>
         </div>
       </div>
