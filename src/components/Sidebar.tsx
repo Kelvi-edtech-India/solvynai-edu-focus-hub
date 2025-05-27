@@ -21,6 +21,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -28,6 +29,7 @@ const Sidebar = () => {
   const location = useLocation();
   const { signOut } = useAuth();
   const { profile } = useProfile();
+  const isMobile = useIsMobile();
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/' },
@@ -46,6 +48,11 @@ const Sidebar = () => {
     await signOut();
     toast.success('Logged out successfully');
   };
+
+  // Don't render sidebar on mobile - we'll use bottom nav instead
+  if (isMobile) {
+    return null;
+  }
 
   return (
     <div className={`bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'} h-full flex flex-col fixed left-0 top-0 z-50`}>
@@ -70,7 +77,7 @@ const Sidebar = () => {
             </div>
           )}
           {isCollapsed && (
-            <div className="w-8 h-8 flex items-center justify-center">
+            <div className="w-8 h-8 flex items-center justify-center mx-auto">
               <img 
                 src="/lovable-uploads/6b063d7c-1b98-4be1-b6fe-6da3e5cb5e4a.png" 
                 alt="SolvynAI Logo" 
@@ -87,9 +94,9 @@ const Sidebar = () => {
             variant="ghost"
             size="sm"
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 h-8 w-8 p-0 flex items-center justify-center"
           >
-            {isCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
+            {isCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
           </Button>
         </div>
       </div>
@@ -106,9 +113,9 @@ const Sidebar = () => {
                 isActive 
                   ? 'bg-green-500 text-white' 
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-              }`}>
-                <Icon className="h-5 w-5" />
-                {!isCollapsed && <span className="font-medium">{item.label}</span>}
+              } ${isCollapsed ? 'justify-center' : ''}`}>
+                <Icon className="h-5 w-5 flex-shrink-0" />
+                {!isCollapsed && <span className="font-medium truncate">{item.label}</span>}
               </div>
             </Link>
           );
@@ -122,10 +129,12 @@ const Sidebar = () => {
           variant="ghost"
           size="sm"
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className={`w-full ${isCollapsed ? 'px-2' : 'justify-start'} text-gray-700 dark:text-gray-300`}
+          className={`w-full h-10 ${isCollapsed ? 'px-0 justify-center' : 'justify-start'} text-gray-700 dark:text-gray-300`}
         >
-          {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          {!isCollapsed && <span className="ml-3">Toggle Theme</span>}
+          <div className="flex items-center space-x-3">
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            {!isCollapsed && <span>Toggle Theme</span>}
+          </div>
         </Button>
 
         {/* Profile */}
@@ -133,12 +142,14 @@ const Sidebar = () => {
           <Button
             variant="ghost"
             size="sm"
-            className={`w-full ${isCollapsed ? 'px-2' : 'justify-start'} text-gray-700 dark:text-gray-300`}
+            className={`w-full h-10 ${isCollapsed ? 'px-0 justify-center' : 'justify-start'} text-gray-700 dark:text-gray-300`}
           >
-            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-              {userInitials}
+            <div className="flex items-center space-x-3">
+              <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                {userInitials}
+              </div>
+              {!isCollapsed && <span>Profile</span>}
             </div>
-            {!isCollapsed && <span className="ml-3">Profile</span>}
           </Button>
         </Link>
 
@@ -147,10 +158,12 @@ const Sidebar = () => {
           variant="ghost"
           size="sm"
           onClick={handleLogout}
-          className={`w-full ${isCollapsed ? 'px-2' : 'justify-start'} text-gray-700 dark:text-gray-300 hover:text-red-500`}
+          className={`w-full h-10 ${isCollapsed ? 'px-0 justify-center' : 'justify-start'} text-gray-700 dark:text-gray-300 hover:text-red-500`}
         >
-          <LogOut className="h-5 w-5" />
-          {!isCollapsed && <span className="ml-3">Logout</span>}
+          <div className="flex items-center space-x-3">
+            <LogOut className="h-5 w-5" />
+            {!isCollapsed && <span>Logout</span>}
+          </div>
         </Button>
       </div>
     </div>
