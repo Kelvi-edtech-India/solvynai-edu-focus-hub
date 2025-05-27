@@ -17,7 +17,7 @@ export const useFocusSession = () => {
         .from('focus_sessions')
         .insert({
           user_id: user.id,
-          duration_minutes: durationMinutes,
+          duration: durationMinutes,
           task_description: taskDescription || null,
           completed_at: new Date().toISOString()
         });
@@ -45,7 +45,7 @@ export const useFocusSession = () => {
       
       const { data, error } = await supabase
         .from('focus_sessions')
-        .select('duration_minutes')
+        .select('duration')
         .eq('user_id', user.id)
         .gte('completed_at', today.toISOString());
 
@@ -53,7 +53,7 @@ export const useFocusSession = () => {
         console.error('Error fetching sessions:', error);
       } else {
         setSessions(data?.length || 0);
-        setTotalFocusTime(data?.reduce((sum, session) => sum + session.duration_minutes, 0) || 0);
+        setTotalFocusTime(data?.reduce((sum, session) => sum + session.duration, 0) || 0);
       }
     } catch (error) {
       console.error('Error fetching sessions:', error);

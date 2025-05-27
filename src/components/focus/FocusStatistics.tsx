@@ -1,10 +1,11 @@
 
 interface FocusStatisticsProps {
   sessions: number;
+  totalFocusTime: number;
   treeGrowth: number;
 }
 
-const FocusStatistics = ({ sessions, treeGrowth }: FocusStatisticsProps) => {
+const FocusStatistics = ({ sessions, totalFocusTime, treeGrowth }: FocusStatisticsProps) => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div className="text-center">
@@ -15,7 +16,7 @@ const FocusStatistics = ({ sessions, treeGrowth }: FocusStatisticsProps) => {
       </div>
       <div className="text-center">
         <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-          {sessions * 25}
+          {totalFocusTime}
         </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Minutes Focused</div>
       </div>

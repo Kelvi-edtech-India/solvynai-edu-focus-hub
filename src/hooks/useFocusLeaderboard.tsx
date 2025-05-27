@@ -51,7 +51,7 @@ export const useFocusLeaderboard = () => {
           .from('focus_sessions')
           .select(`
             user_id,
-            duration_minutes,
+            duration,
             profiles!inner(full_name, school_name)
           `);
 
@@ -67,7 +67,7 @@ export const useFocusLeaderboard = () => {
                 total_sessions: 0
               };
             }
-            acc[userId].total_focus_time += session.duration_minutes;
+            acc[userId].total_focus_time += session.duration;
             acc[userId].total_sessions += 1;
             return acc;
           }, {});

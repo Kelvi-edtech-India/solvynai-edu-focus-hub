@@ -138,7 +138,7 @@ const FocusMode = () => {
           <CardTitle className="text-gray-900 dark:text-white">Session Statistics</CardTitle>
         </CardHeader>
         <CardContent>
-          <FocusStatistics sessions={sessions} treeGrowth={treeGrowth} />
+          <FocusStatistics sessions={sessions} totalFocusTime={totalFocusTime} treeGrowth={treeGrowth} />
         </CardContent>
       </Card>
     </div>
