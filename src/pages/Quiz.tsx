@@ -28,10 +28,13 @@ interface QuizResult {
 }
 
 const Quiz = () => {
+  const [grade, setGrade] = useState('');
+  const [board, setBoard] = useState('');
   const [subject, setSubject] = useState('');
   const [topic, setTopic] = useState('');
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [numQuestions, setNumQuestions] = useState(5);
+  const [customNumQuestions, setCustomNumQuestions] = useState('');
   const [userType, setUserType] = useState<'student' | 'teacher'>('student');
   const [customPrompt, setCustomPrompt] = useState('');
   
@@ -42,18 +45,24 @@ const Quiz = () => {
   const [quizStarted, setQuizStarted] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
-  const [showExplanation, setShowExplanation] = useState(false);
 
   const { callAI, loading } = useAI();
 
+  const finalNumQuestions = numQuestions === 0 ? parseInt(customNumQuestions) || 5 : numQuestions;
+
   const generateQuiz = async () => {
-    if (!subject.trim() || !topic.trim()) {
-      toast.error('Please fill in both subject and topic');
+    if (!subject.trim() || !topic.trim() || !grade.trim() || !board.trim()) {
+      toast.error('Please fill in all required fields');
       return;
     }
 
-    const prompt = `Create a ${difficulty} level quiz about ${topic} in ${subject}. 
-    Generate exactly ${numQuestions} multiple choice questions with 4 options each.
+    if (numQuestions === 0 && (!customNumQuestions || parseInt(customNumQuestions) <= 0)) {
+      toast.error('Please enter a valid number of questions');
+      return;
+    }
+
+    const prompt = `Create a ${difficulty} level quiz for ${grade} grade students following ${board} board curriculum about ${topic} in ${subject}. 
+    Generate exactly ${finalNumQuestions} multiple choice questions with 4 options each.
     ${userType === 'teacher' ? 'Make this suitable for testing students and include detailed explanations.' : 'Make this educational and engaging for learning.'}
     ${customPrompt ? `Additional requirements: ${customPrompt}` : ''}
     
@@ -68,6 +77,8 @@ const Quiz = () => {
     ]
     
     Make sure:
+    - Questions are appropriate for ${grade} grade level
+    - Content aligns with ${board} board curriculum standards
     - Questions are clear and unambiguous
     - Options are plausible but only one is clearly correct
     - Include explanations for each correct answer
@@ -118,7 +129,6 @@ const Quiz = () => {
       if (currentQuestionIndex < questions.length - 1) {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
         setSelectedAnswer(newAnswers[currentQuestionIndex + 1] !== -1 ? newAnswers[currentQuestionIndex + 1] : null);
-        setShowExplanation(false);
       } else {
         completeQuiz(newAnswers);
       }
@@ -129,7 +139,6 @@ const Quiz = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
       setSelectedAnswer(selectedAnswers[currentQuestionIndex - 1] !== -1 ? selectedAnswers[currentQuestionIndex - 1] : null);
-      setShowExplanation(false);
     }
   };
 
@@ -164,7 +173,6 @@ const Quiz = () => {
     setSelectedAnswers([]);
     setSelectedAnswer(null);
     setQuizResult(null);
-    setShowExplanation(false);
   };
 
   const currentQuestion = questions[currentQuestionIndex];
@@ -301,25 +309,6 @@ const Quiz = () => {
                 ))}
               </RadioGroup>
 
-              {showExplanation && selectedAnswer !== null && (
-                <div className={`p-4 rounded-lg ${
-                  selectedAnswer === currentQuestion.correctAnswer ? 
-                  'bg-green-50 border border-green-200 dark:bg-green-900/20' :
-                  'bg-red-50 border border-red-200 dark:bg-red-900/20'
-                }`}>
-                  <p className={`font-medium ${
-                    selectedAnswer === currentQuestion.correctAnswer ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'
-                  }`}>
-                    {selectedAnswer === currentQuestion.correctAnswer ? 'Correct!' : 'Incorrect!'}
-                  </p>
-                  {currentQuestion.explanation && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                      {currentQuestion.explanation}
-                    </p>
-                  )}
-                </div>
-              )}
-
               <div className="flex justify-between">
                 <Button
                   variant="outline"
@@ -329,24 +318,13 @@ const Quiz = () => {
                   Previous
                 </Button>
                 
-                <div className="space-x-2">
-                  {selectedAnswer !== null && !showExplanation && (
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowExplanation(true)}
-                    >
-                      Show Explanation
-                    </Button>
-                  )}
-                  
-                  <Button
-                    onClick={handleNextQuestion}
-                    disabled={selectedAnswer === null}
-                    className="bg-purple-500 hover:bg-purple-600"
-                  >
-                    {currentQuestionIndex === questions.length - 1 ? 'Finish Quiz' : 'Next Question'}
-                  </Button>
-                </div>
+                <Button
+                  onClick={handleNextQuestion}
+                  disabled={selectedAnswer === null}
+                  className="bg-purple-500 hover:bg-purple-600"
+                >
+                  {currentQuestionIndex === questions.length - 1 ? 'Finish Quiz' : 'Next Question'}
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -393,7 +371,27 @@ const Quiz = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="subject">Subject</Label>
+                <Label htmlFor="grade">Grade *</Label>
+                <Input
+                  id="grade"
+                  placeholder="e.g., 10th, 12th, Bachelor's, etc."
+                  value={grade}
+                  onChange={(e) => setGrade(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="board">Board of Education *</Label>
+                <Input
+                  id="board"
+                  placeholder="e.g., CBSE, ICSE, State Board, IB, etc."
+                  value={board}
+                  onChange={(e) => setBoard(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="subject">Subject *</Label>
                 <Input
                   id="subject"
                   placeholder="e.g., Mathematics, History, Science"
@@ -403,7 +401,7 @@ const Quiz = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="topic">Topic</Label>
+                <Label htmlFor="topic">Topic *</Label>
                 <Input
                   id="topic"
                   placeholder="e.g., Quadratic Equations, World War II, Photosynthesis"
@@ -439,9 +437,25 @@ const Quiz = () => {
                     <SelectItem value="10">10 Questions</SelectItem>
                     <SelectItem value="15">15 Questions</SelectItem>
                     <SelectItem value="20">20 Questions</SelectItem>
+                    <SelectItem value="0">Custom</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {numQuestions === 0 && (
+                <div className="space-y-2">
+                  <Label htmlFor="customNumQuestions">Custom Number of Questions</Label>
+                  <Input
+                    id="customNumQuestions"
+                    type="number"
+                    placeholder="Enter number of questions"
+                    value={customNumQuestions}
+                    onChange={(e) => setCustomNumQuestions(e.target.value)}
+                    min="1"
+                    max="50"
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="customPrompt">Additional Requirements (Optional)</Label>
@@ -459,7 +473,7 @@ const Quiz = () => {
           <div className="mt-6 flex justify-center">
             <Button
               onClick={generateQuiz}
-              disabled={loading || !subject.trim() || !topic.trim()}
+              disabled={loading || !subject.trim() || !topic.trim() || !grade.trim() || !board.trim()}
               className="bg-blue-500 hover:bg-blue-600 px-8"
             >
               {loading ? (
@@ -471,7 +485,7 @@ const Quiz = () => {
                 <>
                   <Play className="h-4 w-4 mr-2" />
                   Generate Quiz
-                </>
+                </Play>
               )}
             </Button>
           </div>

@@ -6,13 +6,13 @@ import {
   BookOpen, 
   HelpCircle, 
   CheckSquare, 
-  Layout, 
   Timer, 
   Sun, 
   Moon, 
   LogOut,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Brain
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
@@ -37,8 +37,8 @@ const Sidebar = () => {
     { icon: BookOpen, label: 'Answer Analyzer', path: '/answer-analyzer' },
     { icon: HelpCircle, label: 'Doubt Solver', path: '/doubt-solver' },
     { icon: CheckSquare, label: 'To Do List', path: '/todo' },
-    { icon: Layout, label: 'Kanban Board', path: '/kanban' },
     { icon: Timer, label: 'Focus Mode', path: '/focus' },
+    { icon: Brain, label: 'Quiz', path: '/quiz' },
   ];
 
   const userName = profile?.full_name || "User";
