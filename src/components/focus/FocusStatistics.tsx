@@ -3,9 +3,16 @@ interface FocusStatisticsProps {
   sessions: number;
   totalFocusTime: number;
   treeGrowth: number;
+  totalLifetimeMinutes: number;
 }
 
-const FocusStatistics = ({ sessions, totalFocusTime, treeGrowth }: FocusStatisticsProps) => {
+const FocusStatistics = ({ sessions, totalFocusTime, treeGrowth, totalLifetimeMinutes }: FocusStatisticsProps) => {
+  const formatTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  };
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div className="text-center">
@@ -28,7 +35,7 @@ const FocusStatistics = ({ sessions, totalFocusTime, treeGrowth }: FocusStatisti
       </div>
       <div className="text-center">
         <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-          87h 22m
+          {totalLifetimeMinutes > 0 ? formatTime(totalLifetimeMinutes) : '0h 0m'}
         </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Total Time</div>
       </div>
