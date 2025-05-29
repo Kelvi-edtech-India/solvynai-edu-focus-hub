@@ -5,7 +5,8 @@ import {
   BookOpen, 
   CheckSquare, 
   Timer, 
-  User
+  User,
+  Brain
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -20,7 +21,7 @@ const BottomNavbar = () => {
     { icon: BookOpen, label: 'Analyze', path: '/answer-analyzer' },
     { icon: CheckSquare, label: 'Todo', path: '/todo' },
     { icon: Timer, label: 'Focus', path: '/focus' },
-    { icon: User, label: 'Profile', path: '/profile' },
+    { icon: Brain, label: 'Quiz', path: '/quiz' },
   ];
 
   // Only show on mobile

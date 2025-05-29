@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Timer } from 'lucide-react';
@@ -8,11 +9,12 @@ import FocusStatistics from '@/components/focus/FocusStatistics';
 import { useFocusSession } from '@/hooks/useFocusSession';
 
 const FocusMode = () => {
-  const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isActive, setIsActive] = useState(false);
   const [mode, setMode] = useState<'focus' | 'shortBreak' | 'longBreak'>('focus');
   const [currentTask, setCurrentTask] = useState('');
   const [treeGrowth, setTreeGrowth] = useState(0);
+  const [currentDuration, setCurrentDuration] = useState(25 * 60);
   
   const { sessions, totalFocusTime, totalLifetimeMinutes, saveFocusSession } = useFocusSession();
 
@@ -29,9 +31,7 @@ const FocusMode = () => {
       interval = setInterval(() => {
         setTimeLeft((time) => {
           const newTime = time - 1;
-          // Update tree growth based on progress
-          const totalTime = presets[mode];
-          const progress = ((totalTime - newTime) / totalTime) * 100;
+          const progress = ((currentDuration - newTime) / currentDuration) * 100;
           setTreeGrowth(Math.min(progress, 100));
           return newTime;
         });
@@ -42,22 +42,25 @@ const FocusMode = () => {
     }
 
     return () => clearInterval(interval);
-  }, [isActive, timeLeft, mode]);
+  }, [isActive, timeLeft, currentDuration]);
 
   const handleSessionComplete = async () => {
     if (mode === 'focus') {
-      // Save the focus session to database
-      await saveFocusSession(25, currentTask);
+      const completedMinutes = Math.round(currentDuration / 60);
+      await saveFocusSession(completedMinutes, currentTask);
     }
     
-    // Auto-switch to break mode
     if (mode === 'focus') {
       const nextMode = sessions > 0 && (sessions + 1) % 4 === 0 ? 'longBreak' : 'shortBreak';
       setMode(nextMode);
-      setTimeLeft(presets[nextMode]);
+      const nextDuration = presets[nextMode];
+      setTimeLeft(nextDuration);
+      setCurrentDuration(nextDuration);
     } else {
       setMode('focus');
-      setTimeLeft(presets.focus);
+      const nextDuration = presets.focus;
+      setTimeLeft(nextDuration);
+      setCurrentDuration(nextDuration);
     }
     
     setTreeGrowth(0);
@@ -69,20 +72,29 @@ const FocusMode = () => {
 
   const resetTimer = () => {
     setIsActive(false);
-    setTimeLeft(presets[mode]);
+    setTimeLeft(currentDuration);
     setTreeGrowth(0);
   };
 
   const switchMode = (newMode: 'focus' | 'shortBreak' | 'longBreak') => {
     setMode(newMode);
-    setTimeLeft(presets[newMode]);
+    const newDuration = presets[newMode];
+    setTimeLeft(newDuration);
+    setCurrentDuration(newDuration);
+    setIsActive(false);
+    setTreeGrowth(0);
+  };
+
+  const handleCustomDuration = (minutes: number, type: 'focus' | 'shortBreak' | 'longBreak') => {
+    const seconds = minutes * 60;
+    setCurrentDuration(seconds);
+    setTimeLeft(seconds);
     setIsActive(false);
     setTreeGrowth(0);
   };
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      {/* Header */}
       <Card className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white border-0">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-2xl">
@@ -96,10 +108,13 @@ const FocusMode = () => {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Timer Section */}
         <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
           <CardHeader>
-            <FocusModeControls mode={mode} onSwitchMode={switchMode} />
+            <FocusModeControls 
+              mode={mode} 
+              onSwitchMode={switchMode}
+              onCustomDuration={handleCustomDuration}
+            />
           </CardHeader>
           
           <CardContent>
@@ -116,7 +131,6 @@ const FocusMode = () => {
           </CardContent>
         </Card>
 
-        {/* Tree Growth Visualization */}
         <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
           <CardHeader>
             <CardTitle className="text-gray-900 dark:text-white">Your Focus Tree</CardTitle>
@@ -131,7 +145,6 @@ const FocusMode = () => {
         </Card>
       </div>
 
-      {/* Statistics */}
       <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
         <CardHeader>
           <CardTitle className="text-gray-900 dark:text-white">Session Statistics</CardTitle>

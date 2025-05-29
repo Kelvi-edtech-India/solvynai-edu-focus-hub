@@ -13,6 +13,7 @@ const QuestionGenerator = lazy(() => import("@/pages/QuestionGenerator"));
 const AnswerAnalyzer = lazy(() => import("@/pages/AnswerAnalyzer"));
 const DoubtSolver = lazy(() => import("@/pages/DoubtSolver"));
 const FocusMode = lazy(() => import("@/pages/FocusMode"));
+const Quiz = lazy(() => import("@/pages/Quiz"));
 const Auth = lazy(() => import("@/pages/Auth"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
@@ -37,6 +38,7 @@ function App() {
             <Route path="doubt-solver" element={<DoubtSolver />} />
             <Route path="todo" element={<TodoList />} />
             <Route path="focus" element={<FocusMode />} />
+            <Route path="quiz" element={<Quiz />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

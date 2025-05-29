@@ -54,7 +54,9 @@ const TodoList = () => {
   };
 
   const handleDeleteTask = async (id: string) => {
-    await deleteTask(id);
+    if (window.confirm('Are you sure you want to delete this task?')) {
+      await deleteTask(id);
+    }
   };
 
   const moveTask = async (taskId: string, newStatus: string) => {
@@ -314,7 +316,6 @@ const TodoList = () => {
 
         {/* Kanban View */}
         <TabsContent value="kanban" className="space-y-6">
-          {/* Board */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {columns.map((column) => (
               <Card key={column.id} className={`bg-white dark:bg-gray-800 border-0 shadow-sm ${getColumnColor(column.id)}`}>
@@ -340,7 +341,6 @@ const TodoList = () => {
                 </CardHeader>
                 
                 <CardContent className="space-y-3">
-                  {/* Add Task Input */}
                   {activeColumn === column.id && (
                     <div className="space-y-2">
                       <Input
@@ -370,7 +370,6 @@ const TodoList = () => {
                     </div>
                   )}
 
-                  {/* Tasks */}
                   {column.tasks.map((task) => (
                     <Card key={task.id} className="border border-gray-200 dark:border-gray-600 hover:shadow-md transition-shadow cursor-pointer">
                       <CardContent className="p-3">
@@ -380,8 +379,13 @@ const TodoList = () => {
                               {task.title}
                             </h4>
                             <div className="relative">
-                              <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
-                                <MoreHorizontal className="h-3 w-3" />
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-5 w-5 p-0"
+                                onClick={() => handleDeleteTask(task.id)}
+                              >
+                                <Trash2 className="h-3 w-3 text-red-500" />
                               </Button>
                             </div>
                           </div>
@@ -404,13 +408,7 @@ const TodoList = () => {
                               </div>
                             )}
                           </div>
-                          
-                          <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                            <User className="h-3 w-3 mr-1" />
-                            You
-                          </div>
 
-                          {/* Move task buttons */}
                           <div className="flex space-x-1 pt-2">
                             {column.id !== 'todo' && (
                               <Button
@@ -440,21 +438,12 @@ const TodoList = () => {
                                 →
                               </Button>
                             )}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleDeleteTask(task.id)}
-                              className="text-xs px-2 py-1 h-6 text-red-500 hover:text-red-600"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
                   ))}
 
-                  {/* Add Task Button */}
                   {activeColumn !== column.id && (
                     <Button
                       variant="ghost"
@@ -469,41 +458,6 @@ const TodoList = () => {
               </Card>
             ))}
           </div>
-
-          {/* Board Stats */}
-          <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-gray-900 dark:text-white">Board Statistics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {columns.find(c => c.id === 'todo')?.tasks.length || 0}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">To Do</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                    {columns.find(c => c.id === 'in-progress')?.tasks.length || 0}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">In Progress</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                    {columns.find(c => c.id === 'review')?.tasks.length || 0}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Review</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {columns.find(c => c.id === 'done')?.tasks.length || 0}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Done</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
     </div>
