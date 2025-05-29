@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Timer } from 'lucide-react';
@@ -15,7 +14,7 @@ const FocusMode = () => {
   const [currentTask, setCurrentTask] = useState('');
   const [treeGrowth, setTreeGrowth] = useState(0);
   
-  const { sessions, totalFocusTime, saveFocusSession } = useFocusSession();
+  const { sessions, totalFocusTime, totalLifetimeMinutes, saveFocusSession } = useFocusSession();
 
   const presets = {
     focus: 25 * 60,
@@ -138,7 +137,12 @@ const FocusMode = () => {
           <CardTitle className="text-gray-900 dark:text-white">Session Statistics</CardTitle>
         </CardHeader>
         <CardContent>
-          <FocusStatistics sessions={sessions} totalFocusTime={totalFocusTime} treeGrowth={treeGrowth} />
+          <FocusStatistics 
+            sessions={sessions} 
+            totalFocusTime={totalFocusTime} 
+            treeGrowth={treeGrowth} 
+            totalLifetimeMinutes={totalLifetimeMinutes}
+          />
         </CardContent>
       </Card>
     </div>
